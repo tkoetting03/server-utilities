@@ -1,122 +1,43 @@
-# Hologram Menu Mod
+![server-utilities text](https://cdn.modrinth.com/data/cached_images/99df9134ba9b5a7414ba2f2f154ab45c06a9dae5.png)
 
-A Fabric mod for Minecraft **26.1.2** that adds:
+**Server Utilities** is a mod aiming to recreate certain decorative features of popular Minecraft servers in the player's own world. 
 
-- **Persistent text holograms** using Minecraft display entities
-- **Hologram placement mode** — toggle with a keybind; any held item or fist places holograms
-- **JSON-defined interactive menus** with server-validated actions
-- **Container popup** in the bottom-left when viewing chests and other inventories
-- **Client config file** for popup settings
-- **Anvil text styling** with colors and formatting effects
+**H** is the defualt hotkey to access the main menu for the mod, and **K** is the default hotkey for the Item Styler, all toggles can be mapped to other hotkeys but are initially unbound.
 
-## Requirements
+This mod is **intended for singleplayer usage** to emulate server aesthetics and features in a player's personal world. Use in an actual server at your own risk.
 
-- Minecraft 26.1.2
-- Fabric Loader 0.19.3+
-- Fabric API 0.152.1+26.1.2
-- Java 25
+![Separator](https://cdn.modrinth.com/data/cached_images/61a162c9792e9112451be754682511a308de1748.png)
 
-## Hologram Placement Mode
+# Holograms
 
-Press **G** (default) to toggle placement mode on/off. While active:
+Create Holograms with multiple lines, styling, and sizes tied to a block or entity. Blocks tied to holograms are outlined when in Hologram Edit mode.
 
-- **Right-click** with any item or empty hand places a hologram where you aim (max **2 blocks**)
-- Normal item use is blocked so your held item won't activate
-- **Right-click an existing hologram** still opens the edit/delete menu
+![Separator](https://cdn.modrinth.com/data/cached_images/61a162c9792e9112451be754682511a308de1748.png)
 
-Default text is set in `config/hologrammenu-client.json` via `defaultPlacementText`.
+# NPCs
 
-## Commands
+Create NPC villagers or players, give them custom chat dialogue, embed inventories/shops, apply particle effects, and more. NPC menus can be accessed by using the NPC placement tool and then using the NPC Edit tool afterwards.
 
-| Command | Description |
-|---------|-------------|
-| `/hologram create <text>` | Place a hologram in front of you |
-| `/hologram remove` | Remove the nearest hologram |
-| `/hologram list` | List nearby holograms |
-| `/menu open <id>` | Open an interactive menu |
+![Separator](https://cdn.modrinth.com/data/cached_images/61a162c9792e9112451be754682511a308de1748.png)
 
-## Keybinds
+# Custom Containers and Shops
 
-| Key | Action |
-|-----|--------|
-| `G` | Toggle hologram placement mode |
-| `H` | Toggle container popup |
-| `M` | Open configured menu |
+Create menus with associated command items, shops, and sub-menus. Custom containers can be created in traditional container blocks or placed on all other blocks/entities using the Container Placement Toggle in the main menu.
 
-## Client Config
+![Separator](https://cdn.modrinth.com/data/cached_images/61a162c9792e9112451be754682511a308de1748.png)
 
-On first launch, the mod creates `config/hologrammenu-client.json`:
+# Text Styling
 
-```json
-{
-  "showContainerPopup": true,
-  "popupMenuId": "main",
-  "defaultPlacementText": "Hologram"
-}
-```
+Create RGB colored text with text effects and descriptions/lore. The styling menu can be accessed through the automatically toggled widget in the anvil screen, or by accessing the Item Styler, which is initialy bound to the **H** key.
 
-| Option | Description |
-|--------|-------------|
-| `showContainerPopup` | Show the quick-menu popup in container inventories |
-| `popupMenuId` | Menu opened by the popup button and `M` key |
-| `defaultPlacementText` | Text used when placing holograms in placement mode |
+![Separator](https://cdn.modrinth.com/data/cached_images/61a162c9792e9112451be754682511a308de1748.png)
 
-Pressing `H` updates `showContainerPopup` and saves the file automatically.
+# Inspiration And Additional Information
 
-## Custom Menus (JSON)
+For more item focused server decoration features I would highly recommend the [FZMM](https://modrinth.com/mod/fzmm) mod by Zailer43, which inspired this mod.
 
-Add menu files under `data/<namespace>/menus/<id>.json` in a datapack or your mod resources.
+I was also inspired by features found in the [WolfyUtils](https://modrinth.com/plugin/wolfyutils), [ItemEdit](https://modrinth.com/plugin/itemedit), [FancyHolograms](https://modrinth.com/plugin/fancyholograms), and [FancyNpcs](https://modrinth.com/plugin/fancynpcs) plugins.
 
-```json
-{
-  "title": { "translate": "menu.example.title" },
-  "buttons": [
-    {
-      "id": "say_hello",
-      "label": { "text": "Say Hello" },
-      "type": "message",
-      "value": "Hello from a custom menu!"
-    },
-    {
-      "id": "run_cmd",
-      "label": { "translate": "menu.example.run" },
-      "type": "command",
-      "value": "say Hello"
-    },
-    {
-      "id": "submenu",
-      "label": { "text": "Open Tools" },
-      "type": "open_menu",
-      "value": "tools"
-    },
-    {
-      "id": "close",
-      "label": { "text": "Close" },
-      "type": "close"
-    }
-  ]
-}
-```
+I was also inspired by [Hypixel's](https://hypixel.net/) usage of various plugins.
 
-**Button types:** `message`, `command`, `open_menu`, `close`
-
-**Label/title text:** use `{ "translate": "key" }` or `{ "text": "Literal" }`
-
-Run `/reload` to reload menus from datapacks.
-
-## Anvil Styling
-
-Open an anvil and click **Style** to pick colors and text effects for the rename field.
-
-## Build
-
-```bash
-export JAVA_HOME=/opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home
-./gradlew build
-```
-
-The built jar is in `build/libs/`.
-
-## License
-
-MIT
+You can report bugs in the **Issues tab** of the mod's **[GitHub repository](https://github.com/tkoetting03/server-utilities/issues)** and can recommend new ideas in the **Discussion tab**.
