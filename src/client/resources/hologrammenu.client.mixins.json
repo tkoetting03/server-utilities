@@ -1,0 +1,33 @@
+{
+	"required": true,
+	"package": "com.hologrammenu.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"AnvilScreenMixin",
+		"ScreenMixin",
+		"MinecraftMousePreservationMixin",
+		"MouseHandlerPreservationMixin",
+		"ShopSlotTooltipMixin",
+		"ContainerTabRenderMixin",
+		"ContainerEventHandlerMixin",
+		"AbstractContainerScreenMixin",
+		"AbstractWidgetTextScaleMixin",
+		"AbstractWidgetSelectionOutlineMixin",
+		"ScreenModUiMixin",
+		"StorageContainerScreenMixin",
+		"ItemStylerContainerScreenMixin",
+		"MultiPlayerGameModeMixin",
+		"accessor.AnvilScreenAccessor",
+		"accessor.AnvilScreenInvoker",
+		"accessor.AbstractContainerScreenAccessor",
+		"accessor.MouseHandlerAccessor",
+		"accessor.EditBoxAccessor",
+		"accessor.MultiLineEditBoxAccessor",
+		"accessor.MultilineTextFieldAccessor",
+		"accessor.ScreenInvoker",
+		"accessor.ScreenRenderablesAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

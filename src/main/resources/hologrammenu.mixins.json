@@ -1,0 +1,28 @@
+{
+	"required": true,
+	"package": "com.hologrammenu.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"AnvilMenuMixin",
+		"ItemCombinerMenuMixin",
+		"DoubleChestMenuProviderMixin",
+		"RandomizableContainerBlockEntityMenuMixin",
+		"BlockEntityStorageMenuMixin",
+		"BaseContainerBlockEntityTitleMixin",
+		"StorageMenuMixin",
+		"StorageMenuCloseSlotMixin",
+		"ServerPlayerGameModeDestroyMixin",
+		"ServerExplosionMixin",
+		"accessor.CompoundContainerAccessor",
+		"accessor.DispenserMenuAccessor",
+		"accessor.DisplayAccessor",
+		"accessor.HopperMenuAccessor",
+		"accessor.ShulkerBoxMenuAccessor",
+		"accessor.TextDisplayAccessor",
+		"accessor.MannequinAccessor",
+		"accessor.ItemCombinerMenuAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

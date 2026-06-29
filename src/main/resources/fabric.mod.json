@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "hologrammenu",
+	"version": "${version}",
+	"name": "Hologram Menu Mod",
+	"description": "Create persistent text holograms, interactive menus with container popups, and anvil text styling.",
+	"authors": [
+		"HologramMenu"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.hologrammenu.HologramMenuMod"
+		],
+		"client": [
+			"com.hologrammenu.client.HologramMenuClient"
+		]
+	},
+	"mixins": [
+		"hologrammenu.mixins.json",
+		{
+			"config": "hologrammenu.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
