@@ -26,6 +26,38 @@ public final class ModPackets {
 		}
 	}
 
+	public record HologramOpenAtBlockPayload(net.minecraft.core.BlockPos pos) implements CustomPacketPayload {
+		public static final CustomPacketPayload.Type<HologramOpenAtBlockPayload> TYPE =
+			new CustomPacketPayload.Type<>(HologramMenuMod.id("hologram_open_at_block"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, HologramOpenAtBlockPayload> CODEC = StreamCodec.composite(
+			net.minecraft.core.BlockPos.STREAM_CODEC,
+			HologramOpenAtBlockPayload::pos,
+			HologramOpenAtBlockPayload::new
+		);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
+	public record HologramOpenScreenPayload(int entityId, String lines) implements CustomPacketPayload {
+		public static final CustomPacketPayload.Type<HologramOpenScreenPayload> TYPE =
+			new CustomPacketPayload.Type<>(HologramMenuMod.id("hologram_open_screen"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, HologramOpenScreenPayload> CODEC = StreamCodec.composite(
+			ByteBufCodecs.VAR_INT,
+			HologramOpenScreenPayload::entityId,
+			ByteBufCodecs.STRING_UTF8,
+			HologramOpenScreenPayload::lines,
+			HologramOpenScreenPayload::new
+		);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() {
+			return TYPE;
+		}
+	}
+
 	public record HologramPlacePayload(String text) implements CustomPacketPayload {
 		public static final CustomPacketPayload.Type<HologramPlacePayload> TYPE =
 			new CustomPacketPayload.Type<>(HologramMenuMod.id("hologram_place"));

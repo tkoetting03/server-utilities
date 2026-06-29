@@ -31,6 +31,7 @@ public final class StorageMenuClientInteractions {
 			}
 
 			ClientPlayNetworking.send(new ModPackets.StorageMenuAssignPayload(target));
+			StorageMenuAssociatedBlocks.remember(target);
 			return true;
 		});
 	}

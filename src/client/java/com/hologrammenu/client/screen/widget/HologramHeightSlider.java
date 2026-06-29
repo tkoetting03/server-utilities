@@ -11,7 +11,11 @@ public class HologramHeightSlider extends AbstractSliderButton {
 	private final Runnable onChanged;
 
 	public HologramHeightSlider(int x, int y, int width, Component label, float initial, FloatReader reader, FloatWriter writer, Runnable onChanged) {
-		super(x, y, width, UiLayoutHelper.defaultButtonHeight(), Component.empty(), toSlider(initial));
+		this(x, y, width, UiLayoutHelper.defaultButtonHeight(), label, initial, reader, writer, onChanged);
+	}
+
+	public HologramHeightSlider(int x, int y, int width, int height, Component label, float initial, FloatReader reader, FloatWriter writer, Runnable onChanged) {
+		super(x, y, width, height, Component.empty(), toSlider(initial));
 		this.label = label;
 		this.reader = reader;
 		this.writer = writer;

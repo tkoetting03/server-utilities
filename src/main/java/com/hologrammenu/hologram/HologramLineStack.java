@@ -17,22 +17,28 @@ public final class HologramLineStack {
 	public static final int MAX_LINES = 10;
 	public static final String GROUP_TAG_PREFIX = "hologrammenu:hologram_group:";
 	public static final String LINE_INDEX_TAG_PREFIX = "hologrammenu:hologram_line:";
-	public static final float MIN_HEIGHT_OFFSET = -2.0F;
-	public static final float MAX_HEIGHT_OFFSET = 2.0F;
+	public static final String GROUP_HEIGHT_TAG_PREFIX = "hologrammenu:hologram_group_height:";
+	public static final String LINE_HEIGHT_TAG_PREFIX = "hologrammenu:hologram_line_height:";
+	public static final float MIN_HEIGHT_OFFSET = -20.0F;
+	public static final float MAX_HEIGHT_OFFSET = 20.0F;
 	public static final double LINE_SPACING = 0.28D;
 
 	private static final Gson GSON = new Gson();
 	private static final Type LINE_LIST_TYPE = new TypeToken<List<Line>>() {}.getType();
 
-	public record Line(String text, float scale, float heightOffset) {
+	public record Line(String text, float scale, float heightOffset, boolean seeThroughWalls) {
 		public Line {
 			text = TextFormats.normalize(text == null ? "" : text);
 			scale = HologramScale.clamp(scale);
 			heightOffset = clampHeightOffset(heightOffset);
 		}
 
+		public Line(String text, float scale, float heightOffset) {
+			this(text, scale, heightOffset, true);
+		}
+
 		public Line(String text, float scale) {
-			this(text, scale, 0.0F);
+			this(text, scale, 0.0F, true);
 		}
 	}
 
@@ -68,7 +74,13 @@ public final class HologramLineStack {
 		}
 		try {
 			List<Line> lines = GSON.fromJson(json, LINE_LIST_TYPE);
-			return normalize(lines == null ? List.of() : lines);
+			List<Line> normalized = normalize(lines == null ? List.of() : lines);
+			if (!json.contains("\"seeThroughWalls\"")) {
+				return normalized.stream()
+					.map(line -> new Line(line.text(), line.scale(), line.heightOffset(), true))
+					.toList();
+			}
+			return normalized;
 		} catch (RuntimeException ignored) {
 			return parseLegacyText(json, HologramScale.DEFAULT);
 		}
@@ -82,18 +94,46 @@ public final class HologramLineStack {
 			return List.of();
 		}
 		double anchorY = sorted.getLast().getY();
-		int lineCount = sorted.size();
-		return sorted.stream()
-			.map(display -> {
-				int index = Math.max(0, Math.min(lineCount - 1, lineIndex(display)));
-				double expectedY = anchorY + (lineCount - 1 - index) * LINE_SPACING;
-				return new Line(
+		float groupHeightOffset = groupHeightOffset(sorted.getLast());
+		List<Line> baseLines = sorted.stream()
+			.map(display -> new Line(
 				TextFormats.fromComponent(((TextDisplayAccessor) display).hologrammenu$getText()),
-					HologramScale.getScale(display),
-					(float) (display.getY() - expectedY)
-				);
-			})
+				HologramScale.getScale(display),
+				0.0F,
+				isSeeThrough(display)
+			))
 			.toList();
+		List<Line> lines = new ArrayList<>(sorted.size());
+		for (Display.TextDisplay display : sorted) {
+			int index = Math.max(0, Math.min(sorted.size() - 1, lineIndex(display)));
+			double expectedY = anchorY - groupHeightOffset + stackOffsetForLine(baseLines, index);
+			lines.add(new Line(
+				TextFormats.fromComponent(((TextDisplayAccessor) display).hologrammenu$getText()),
+				HologramScale.getScale(display),
+				lineHeightOffset(display).orElse((float) (display.getY() - expectedY)),
+				isSeeThrough(display)
+			));
+		}
+		return lines;
+	}
+
+	public static double stackOffsetForLine(List<Line> lines, int index) {
+		List<Line> normalized = normalize(lines);
+		int clampedIndex = Math.max(0, Math.min(normalized.size() - 1, index));
+		double offset = 0.0D;
+		for (int below = clampedIndex + 1; below < normalized.size(); below++) {
+			offset += lineSpacingAbove(normalized.get(below));
+		}
+		return offset;
+	}
+
+	private static double lineSpacingAbove(Line line) {
+		float scale = line == null ? HologramScale.DEFAULT : HologramScale.clamp(line.scale());
+		return LINE_SPACING * scale;
+	}
+
+	public static boolean isSeeThrough(Display.TextDisplay display) {
+		return (display.getFlags() & Display.TextDisplay.FLAG_SEE_THROUGH) != 0;
 	}
 
 	public static UUID groupId(Entity entity) {
@@ -123,9 +163,44 @@ public final class HologramLineStack {
 	}
 
 	public static void writeLineTags(Entity entity, UUID groupId, int lineIndex) {
-		entity.entityTags().removeIf(tag -> tag.startsWith(GROUP_TAG_PREFIX) || tag.startsWith(LINE_INDEX_TAG_PREFIX));
+		writeLineTags(entity, groupId, lineIndex, 0.0F, 0.0F);
+	}
+
+	public static void writeLineTags(Entity entity, UUID groupId, int lineIndex, float groupHeightOffset, float lineHeightOffset) {
+		entity.entityTags().removeIf(tag -> tag.startsWith(GROUP_TAG_PREFIX)
+			|| tag.startsWith(LINE_INDEX_TAG_PREFIX)
+			|| tag.startsWith(GROUP_HEIGHT_TAG_PREFIX)
+			|| tag.startsWith(LINE_HEIGHT_TAG_PREFIX));
 		entity.addTag(GROUP_TAG_PREFIX + groupId);
 		entity.addTag(LINE_INDEX_TAG_PREFIX + lineIndex);
+		entity.addTag(GROUP_HEIGHT_TAG_PREFIX + String.format(java.util.Locale.ROOT, "%.4f", clampHeightOffset(groupHeightOffset)));
+		entity.addTag(LINE_HEIGHT_TAG_PREFIX + String.format(java.util.Locale.ROOT, "%.4f", clampHeightOffset(lineHeightOffset)));
+	}
+
+	public static float groupHeightOffset(Entity entity) {
+		for (String tag : entity.entityTags()) {
+			if (tag.startsWith(GROUP_HEIGHT_TAG_PREFIX)) {
+				try {
+					return clampHeightOffset(Float.parseFloat(tag.substring(GROUP_HEIGHT_TAG_PREFIX.length())));
+				} catch (NumberFormatException ignored) {
+					return 0.0F;
+				}
+			}
+		}
+		return 0.0F;
+	}
+
+	private static java.util.Optional<Float> lineHeightOffset(Entity entity) {
+		for (String tag : entity.entityTags()) {
+			if (tag.startsWith(LINE_HEIGHT_TAG_PREFIX)) {
+				try {
+					return java.util.Optional.of(clampHeightOffset(Float.parseFloat(tag.substring(LINE_HEIGHT_TAG_PREFIX.length()))));
+				} catch (NumberFormatException ignored) {
+					return java.util.Optional.empty();
+				}
+			}
+		}
+		return java.util.Optional.empty();
 	}
 
 	public static List<Line> normalize(List<Line> source) {
@@ -140,7 +215,8 @@ public final class HologramLineStack {
 			normalized.add(new Line(
 				line == null ? "" : line.text(),
 				line == null ? HologramScale.DEFAULT : line.scale(),
-				line == null ? 0.0F : line.heightOffset()
+				line == null ? 0.0F : line.heightOffset(),
+				line == null || line.seeThroughWalls()
 			));
 		}
 		if (normalized.isEmpty()) {

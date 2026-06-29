@@ -31,7 +31,8 @@ public final class StorageMenuHologramLabels {
 
 		StorageMenuHologramSettings resolved = settings == null ? StorageMenuHologramSettings.DEFAULT : settings;
 		Vec3 position = Vec3.atCenterOf(pos).add(0.0D, LABEL_Y_OFFSET + resolved.heightOffset(), 0.0D);
-		HologramHelper.createStorageLabel(level, position, TextFormats.toComponent(text.trim()), resolved.scale());
+		Display.TextDisplay display = HologramHelper.createStorageLabel(level, position, TextFormats.toComponent(text.trim()), resolved.scale());
+		HologramHelper.tagAssociatedBlock(display, pos);
 	}
 
 	public static void remove(ServerLevel level, BlockPos pos) {

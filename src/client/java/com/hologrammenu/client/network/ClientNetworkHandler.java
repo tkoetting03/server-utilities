@@ -5,9 +5,12 @@ import com.hologrammenu.client.npc.NpcClientConfigStore;
 import com.hologrammenu.client.npc.NpcClientRegistry;
 import com.hologrammenu.client.npc.NpcEditorSessionState;
 import com.hologrammenu.client.screen.EditorMousePreservation;
+import com.hologrammenu.client.screen.HologramOptionsScreen;
 import com.hologrammenu.client.screen.StorageMenuEditorOverlay;
 import com.hologrammenu.client.storage.ShopClientState;
+import com.hologrammenu.client.storage.StorageMenuAssociatedBlocks;
 import com.hologrammenu.client.storage.StorageMenuClientTracker;
+import com.hologrammenu.hologram.HologramLineStack;
 import com.hologrammenu.network.ModPackets;
 import com.hologrammenu.storage.StorageMenuViewContext;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -29,6 +32,12 @@ public final class ClientNetworkHandler {
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.HologramSyncPayload.TYPE, (payload, context) -> {
 			Minecraft.getInstance().execute(() -> HologramClientRegistry.sync(payload.holograms()));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.HologramOpenScreenPayload.TYPE, (payload, context) -> {
+			Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(
+				new HologramOptionsScreen(payload.entityId(), HologramLineStack.deserialize(payload.lines()))
+			));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.NpcTrackPayload.TYPE, (payload, context) -> {
@@ -71,6 +80,7 @@ public final class ClientNetworkHandler {
 					viewContext = viewContext.withSubMenu(payload.subMenuId());
 				}
 				StorageMenuClientTracker.setActiveView(viewContext);
+				StorageMenuAssociatedBlocks.remember(viewContext.anchorPos());
 				StorageMenuEditorOverlay.handleContext(viewContext);
 			});
 		});
@@ -98,6 +108,7 @@ public final class ClientNetworkHandler {
 			NpcClientConfigStore.clear();
 			NpcEditorSessionState.clearAll();
 			StorageMenuClientTracker.clear();
+			StorageMenuAssociatedBlocks.clear();
 			ShopClientState.clear();
 		});
 	}

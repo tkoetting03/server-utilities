@@ -6,27 +6,40 @@ import com.hologrammenu.hologram.HologramHelper;
 import com.hologrammenu.hologram.HologramLineStack;
 import com.hologrammenu.hologram.HologramScale;
 import com.hologrammenu.mixin.accessor.TextDisplayAccessor;
+import com.hologrammenu.network.ModPackets;
 import com.hologrammenu.text.TextFormats;
-import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
-import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public final class HologramClientEditInteractions {
+	private static final int LEGACY_BLOCK_SEARCH_RADIUS = 1;
+	private static final int LEGACY_BLOCK_SEARCH_DOWN = 64;
+	private static final int LEGACY_BLOCK_SEARCH_UP = 2;
+
 	private HologramClientEditInteractions() {
 	}
 
@@ -38,18 +51,12 @@ public final class HologramClientEditInteractions {
 			return openOptionsScreen(entity);
 		});
 
-		AttackEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-			if (!level.isClientSide() || !ClientSettings.hologramEditModeEnabled || !HologramClientRegistry.isEditableHologram(entity)) {
-				return InteractionResult.PASS;
-			}
-			return openOptionsScreen(entity);
-		});
-
 		UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
 			if (!level.isClientSide() || !ClientSettings.hologramEditModeEnabled) {
 				return InteractionResult.PASS;
 			}
-			return findTargetHologram().map(HologramClientEditInteractions::openOptionsScreen).orElse(InteractionResult.PASS);
+			ClientPlayNetworking.send(new ModPackets.HologramOpenAtBlockPayload(hitResult.getBlockPos()));
+			return InteractionResult.SUCCESS;
 		});
 
 		UseItemCallback.EVENT.register((player, level, hand) -> {
@@ -57,18 +64,6 @@ public final class HologramClientEditInteractions {
 				return InteractionResult.PASS;
 			}
 			return findTargetHologram().map(HologramClientEditInteractions::openOptionsScreen).orElse(InteractionResult.PASS);
-		});
-
-		ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
-			if (!ClientSettings.hologramEditModeEnabled) {
-				return false;
-			}
-			return findTargetHologram()
-				.map(entity -> {
-					openOptionsScreen(entity);
-					return true;
-				})
-				.orElse(false);
 		});
 	}
 
@@ -85,11 +80,91 @@ public final class HologramClientEditInteractions {
 			}
 		}
 
+		if (client.hitResult instanceof BlockHitResult blockHit && client.hitResult.getType() == HitResult.Type.BLOCK) {
+			Optional<Entity> associated = findTargetHologram(blockHit.getBlockPos());
+			if (associated.isPresent()) {
+				return associated;
+			}
+		}
+
 		return HologramHelper.findLookAtHologram(
 			client.player,
 			HologramClientRegistry::isEditableHologram,
 			HologramHelper.EDIT_MAX_DISTANCE
 		).map(entity -> entity);
+	}
+
+	private static Optional<Entity> findTargetHologram(BlockPos blockPos) {
+		Minecraft client = Minecraft.getInstance();
+		if (client.player == null || client.level == null || blockPos == null) {
+			return Optional.empty();
+		}
+
+		Entity best = null;
+		double bestDistance = Double.MAX_VALUE;
+		for (Entity candidate : editableHologramCandidates(client)) {
+			if (!HologramClientRegistry.isEditableHologram(candidate)) {
+				continue;
+			}
+			Optional<BlockPos> associatedBlock = HologramHelper.associatedBlock(candidate)
+				.or(() -> nearestAssociatedBlock(client.level, candidate.position()));
+			if (associatedBlock.isEmpty() || !associatedBlock.get().equals(blockPos)) {
+				continue;
+			}
+			if (!HologramHelper.canEdit(client.player, candidate)) {
+				continue;
+			}
+			double distance = client.player.distanceToSqr(candidate);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				best = candidate;
+			}
+		}
+		return Optional.ofNullable(best);
+	}
+
+	private static List<Entity> editableHologramCandidates(Minecraft client) {
+		List<Entity> candidates = new ArrayList<>();
+		Set<Integer> seen = new HashSet<>();
+		for (int entityId : HologramClientRegistry.knownIds()) {
+			Entity entity = client.level.getEntity(entityId);
+			if (entity instanceof Display.TextDisplay && HologramClientRegistry.isEditableHologram(entity) && seen.add(entity.getId())) {
+				candidates.add(entity);
+			}
+		}
+		for (Entity entity : client.level.entitiesForRendering()) {
+			if (entity instanceof Display.TextDisplay && HologramClientRegistry.isEditableHologram(entity) && seen.add(entity.getId())) {
+				candidates.add(entity);
+			}
+		}
+		return candidates;
+	}
+
+	private static Optional<BlockPos> nearestAssociatedBlock(net.minecraft.client.multiplayer.ClientLevel level, Vec3 position) {
+		BlockPos origin = BlockPos.containing(position);
+		BlockPos best = null;
+		double bestDistance = Double.MAX_VALUE;
+		for (int dy = LEGACY_BLOCK_SEARCH_UP; dy >= -LEGACY_BLOCK_SEARCH_DOWN; dy--) {
+			for (int dx = -LEGACY_BLOCK_SEARCH_RADIUS; dx <= LEGACY_BLOCK_SEARCH_RADIUS; dx++) {
+				for (int dz = -LEGACY_BLOCK_SEARCH_RADIUS; dz <= LEGACY_BLOCK_SEARCH_RADIUS; dz++) {
+					BlockPos pos = origin.offset(dx, dy, dz);
+					BlockState state = level.getBlockState(pos);
+					if (state.isAir()) {
+						continue;
+					}
+					VoxelShape shape = state.getShape(level, pos);
+					if (shape.isEmpty()) {
+						continue;
+					}
+					double distance = Vec3.atCenterOf(pos).distanceToSqr(position);
+					if (distance < bestDistance) {
+						bestDistance = distance;
+						best = pos.immutable();
+					}
+				}
+			}
+		}
+		return Optional.ofNullable(best);
 	}
 
 	private static InteractionResult openOptionsScreen(Entity entity) {

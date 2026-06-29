@@ -50,11 +50,13 @@ public final class NetworkHandler {
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.HologramTrackPayload.TYPE, ModPackets.HologramTrackPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.HologramUntrackPayload.TYPE, ModPackets.HologramUntrackPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.HologramSyncPayload.TYPE, ModPackets.HologramSyncPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(ModPackets.HologramOpenScreenPayload.TYPE, ModPackets.HologramOpenScreenPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.NpcTrackPayload.TYPE, ModPackets.NpcTrackPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.NpcUntrackPayload.TYPE, ModPackets.NpcUntrackPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.NpcSyncPayload.TYPE, ModPackets.NpcSyncPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.NpcConfigPayload.TYPE, ModPackets.NpcConfigPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(ModPackets.HologramEditPayload.TYPE, ModPackets.HologramEditPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(ModPackets.HologramOpenAtBlockPayload.TYPE, ModPackets.HologramOpenAtBlockPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(ModPackets.HologramPlacePayload.TYPE, ModPackets.HologramPlacePayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(ModPackets.SetPlacementModePayload.TYPE, ModPackets.SetPlacementModePayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(ModPackets.SetHologramEditModePayload.TYPE, ModPackets.SetHologramEditModePayload.CODEC);
@@ -81,6 +83,11 @@ public final class NetworkHandler {
 		ServerPlayNetworking.registerGlobalReceiver(ModPackets.HologramEditPayload.TYPE, (payload, context) -> {
 			ServerPlayer player = context.player();
 			context.server().execute(() -> handleHologramEdit(player, payload));
+		});
+
+		ServerPlayNetworking.registerGlobalReceiver(ModPackets.HologramOpenAtBlockPayload.TYPE, (payload, context) -> {
+			ServerPlayer player = context.player();
+			context.server().execute(() -> handleHologramOpenAtBlock(player, payload));
 		});
 
 		ServerPlayNetworking.registerGlobalReceiver(ModPackets.HologramPlacePayload.TYPE, (payload, context) -> {
@@ -170,9 +177,21 @@ public final class NetworkHandler {
 			text = text.substring(0, MAX_PLACEMENT_TEXT_LENGTH);
 		}
 
-		var position = HologramHelper.pickPlacementPosition(player, HologramHelper.WAND_MAX_DISTANCE);
-		HologramHelper.create((ServerLevel) player.level(), position, HologramLineStack.defaults(text));
+		var target = HologramHelper.pickPlacementTarget(player, HologramHelper.WAND_MAX_DISTANCE);
+		List<Display.TextDisplay> displays = HologramHelper.create((ServerLevel) player.level(), target.position(), HologramLineStack.defaults(text));
+		target.blockPos().ifPresent(pos -> displays.forEach(display -> HologramHelper.tagAssociatedBlock(display, pos)));
 		player.sendSystemMessage(Component.translatable("hud.hologrammenu.placement.placed", text));
+	}
+
+	private static void handleHologramOpenAtBlock(ServerPlayer player, ModPackets.HologramOpenAtBlockPayload payload) {
+		if (!HologramEditMode.isActive(player)) {
+			return;
+		}
+		HologramHelper.findEditableByAssociatedBlock((ServerLevel) player.level(), payload.pos(), player)
+			.ifPresent(display -> ServerPlayNetworking.send(player, new ModPackets.HologramOpenScreenPayload(
+				display.getId(),
+				HologramLineStack.serialize(readEditableHologramLines((ServerLevel) player.level(), display))
+			)));
 	}
 
 	private static void handleHologramEdit(ServerPlayer player, ModPackets.HologramEditPayload payload) {
@@ -202,6 +221,12 @@ public final class NetworkHandler {
 			}
 			default -> player.sendSystemMessage(Component.translatable("screen.hologrammenu.hologram_options.invalid_action"));
 		}
+	}
+
+	private static List<HologramLineStack.Line> readEditableHologramLines(ServerLevel level, Display.TextDisplay display) {
+		java.util.UUID groupId = HologramLineStack.groupId(display);
+		List<Display.TextDisplay> group = groupId == null ? List.of(display) : HologramHelper.findGroup(level, groupId);
+		return group.isEmpty() ? List.of(new HologramLineStack.Line("", com.hologrammenu.hologram.HologramScale.DEFAULT)) : HologramLineStack.readGroup(group);
 	}
 
 	private static void handleNpcPlace(ServerPlayer player, ModPackets.NpcPlacePayload payload) {
