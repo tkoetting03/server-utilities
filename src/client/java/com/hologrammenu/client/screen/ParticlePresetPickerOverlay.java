@@ -2,7 +2,7 @@ package com.hologrammenu.client.screen;
 
 import com.hologrammenu.client.mixin.accessor.ScreenInvoker;
 import com.hologrammenu.client.screen.widget.DraggableTitleBarWidget;
-import com.hologrammenu.client.screen.widget.HeadPresetPickerPanelWidget;
+import com.hologrammenu.client.screen.widget.PresetPickerPanelWidget;
 import com.hologrammenu.client.screen.widget.LabeledFieldLayout;
 import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.ParticlePresetGridWidget;
@@ -128,10 +128,10 @@ public final class ParticlePresetPickerOverlay {
 	private void buildWidgets() {
 		tearDownWidgets();
 
-		int panelWidth = HeadPresetPickerPanelWidget.panelWidth();
+		int panelWidth = PresetPickerPanelWidget.panelWidth();
 		int panelHeight = panelHeight();
 		int panelPadding = ModPanelLayout.PANEL_PADDING;
-		int contentWidth = HeadPresetPickerPanelWidget.contentWidth();
+		int contentWidth = PresetPickerPanelWidget.contentWidth();
 		int fieldHeight = LabeledFieldLayout.FIELD_HEIGHT;
 		int rowGap = ModPanelLayout.ROW_GAP;
 
@@ -143,9 +143,9 @@ public final class ParticlePresetPickerOverlay {
 		int contentLeft = panelX + panelPadding;
 		layoutContentLeft = contentLeft;
 		layoutContentWidth = contentWidth;
-		int contentTop = panelY + HeadPresetPickerPanelWidget.CONTENT_TOP;
+		int contentTop = panelY + PresetPickerPanelWidget.CONTENT_TOP;
 
-		var panelWidget = new HeadPresetPickerPanelWidget(
+		var panelWidget = new PresetPickerPanelWidget(
 			panelX,
 			panelY,
 			panelWidth,
@@ -182,8 +182,8 @@ public final class ParticlePresetPickerOverlay {
 		itemGrid = new ParticlePresetGridWidget(
 			contentLeft,
 			gridY,
-			HeadPresetPickerPanelWidget.COLS * HeadPresetPickerPanelWidget.slotSize(),
-			HeadPresetPickerPanelWidget.gridHeight(),
+			PresetPickerPanelWidget.gridWidth(),
+			PresetPickerPanelWidget.gridHeight(),
 			() -> entries,
 			() -> scrollRow,
 			() -> selectedIndex,
@@ -194,7 +194,7 @@ public final class ParticlePresetPickerOverlay {
 		int pageButtonWidth = fieldHeight;
 		int pageButtonsWidth = pageButtonWidth * 2 + rowGap;
 		int pageButtonsX = centeredX(contentLeft, contentWidth, pageButtonsWidth);
-		int pageY = gridY + HeadPresetPickerPanelWidget.gridHeight() + ModPanelLayout.ROW_GAP;
+		int pageY = gridY + PresetPickerPanelWidget.gridHeight() + ModPanelLayout.ROW_GAP;
 		prevPageButton = Button.builder(Component.literal("<"), press -> changePage(-1))
 			.bounds(pageButtonsX, pageY, pageButtonWidth, fieldHeight)
 			.build();
@@ -224,10 +224,10 @@ public final class ParticlePresetPickerOverlay {
 	private int panelHeight() {
 		int fieldHeight = LabeledFieldLayout.FIELD_HEIGHT;
 		int labeledSearchRow = LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + fieldHeight;
-		return HeadPresetPickerPanelWidget.CONTENT_TOP
+		return PresetPickerPanelWidget.CONTENT_TOP
 			+ labeledSearchRow + ModPanelLayout.ROW_GAP
 			+ fieldHeight + ModPanelLayout.SECTION_GAP
-			+ HeadPresetPickerPanelWidget.gridHeight() + ModPanelLayout.ROW_GAP
+			+ PresetPickerPanelWidget.gridHeight() + ModPanelLayout.ROW_GAP
 			+ fieldHeight + ModPanelLayout.ROW_GAP
 			+ LabeledFieldLayout.LABEL_HEIGHT
 			+ ModPanelLayout.PANEL_PADDING;
@@ -315,8 +315,8 @@ public final class ParticlePresetPickerOverlay {
 	}
 
 	private int maxScrollRow() {
-		int totalRows = (entries.size() + HeadPresetPickerPanelWidget.COLS - 1) / HeadPresetPickerPanelWidget.COLS;
-		return Math.max(0, totalRows - HeadPresetPickerPanelWidget.VISIBLE_ROWS);
+		int totalRows = (entries.size() + PresetPickerPanelWidget.COLS - 1) / PresetPickerPanelWidget.COLS;
+		return Math.max(0, totalRows - PresetPickerPanelWidget.VISIBLE_ROWS);
 	}
 
 	private void attachLabel(Font font, int x, int y, int width, Component text) {

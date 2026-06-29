@@ -67,12 +67,13 @@ public final class ItemStylerOverlay {
 	public void attach(AbstractContainerScreenAccessor layout) {
 		loadNameFromStack();
 		int buttonHeight = UiLayoutHelper.buttonHeight(screen.getFont());
-		int confirmWidth = Math.max(UiLayoutHelper.buttonWidth(screen.getFont(), Component.translatable("screen.hologrammenu.item_styler.confirm")), 54);
+		int confirmWidth = Math.max(UiLayoutHelper.iconButtonWidth(screen.getFont(), Component.translatable("screen.hologrammenu.item_styler.confirm")), 54);
+		int styleWidth = Math.max(UiLayoutHelper.iconButtonWidth(screen.getFont(), Component.translatable("screen.hologrammenu.item_styler.style")), 54);
 		int nameWidth = 68;
 		int x = layout.hologrammenu$getLeftPos() + 7;
 		int y = layout.hologrammenu$getTopPos() + 18;
 		int actionX = layout.hologrammenu$getLeftPos() + 104;
-		int actionWidth = layout.hologrammenu$getImageWidth() - 112;
+		int actionWidth = Math.max(layout.hologrammenu$getImageWidth() - 112, Math.max(confirmWidth, styleWidth));
 
 		nameField = new EditBox(screen.getFont(), x, y, nameWidth, buttonHeight, Component.translatable("screen.hologrammenu.item_styler.name"));
 		nameField.setMaxLength(64);
@@ -85,7 +86,7 @@ public final class ItemStylerOverlay {
 		confirmButton = VanillaIconButton.create(
 			actionX,
 			y,
-			Math.max(confirmWidth, actionWidth),
+			actionWidth,
 			buttonHeight,
 			Component.translatable("screen.hologrammenu.item_styler.confirm"),
 			new ItemStack(Items.EMERALD),

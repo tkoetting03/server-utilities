@@ -4,6 +4,7 @@ import com.hologrammenu.client.mixin.accessor.AnvilScreenAccessor;
 import com.hologrammenu.client.mixin.accessor.AnvilScreenInvoker;
 import com.hologrammenu.client.mixin.accessor.AbstractContainerScreenAccessor;
 import com.hologrammenu.client.mixin.accessor.ScreenInvoker;
+import com.hologrammenu.client.config.ClientSettings;
 import com.hologrammenu.client.screen.AnvilEditorTab;
 import com.hologrammenu.client.screen.ModEditorGuiState;
 import com.hologrammenu.client.screen.TextStyleOverlay;
@@ -38,6 +39,15 @@ public abstract class AnvilScreenMixin {
 	@Inject(method = "subInit", at = @At("TAIL"))
 	private void hologrammenu$addEditorTab(CallbackInfo ci) {
 		AnvilScreen screen = (AnvilScreen) (Object) this;
+		if (!ClientSettings.styleWidgetEnabled) {
+			if (hologrammenu$editorOverlay != null) {
+				hologrammenu$editorOverlay.dispose();
+				hologrammenu$editorOverlay = null;
+			}
+			hologrammenu$editorTab = null;
+			return;
+		}
+
 		ScreenInvoker invoker = (ScreenInvoker) (Screen) screen;
 		AnvilScreenAccessor accessor = (AnvilScreenAccessor) screen;
 		AbstractContainerScreenAccessor layout = (AbstractContainerScreenAccessor) screen;

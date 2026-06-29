@@ -11,7 +11,7 @@ public final class StorageMenuFillerItems {
 	}
 
 	public static ItemStack defaultFiller() {
-		ItemStack stack = new ItemStack(Items.GRAY_STAINED_GLASS_PANE);
+		ItemStack stack = new ItemStack(Items.LIGHT_GRAY_STAINED_GLASS);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal(" "));
 		return stack;
 	}

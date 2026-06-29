@@ -20,9 +20,9 @@ public final class TextStylePanelLayout {
 	public static final int SECTION_GAP = ModPanelLayout.SECTION_GAP;
 	public static final int SECTION_LABEL_GAP = ModPanelLayout.SECTION_LABEL_GAP;
 	public static final int FOOTER_SECTION_GAP = ModPanelLayout.SECTION_GAP;
-	public static final int BUTTON_EXTRA_VERTICAL_PAD = UiScale.s(8);
-	public static final int EFFECT_EXTRA_VERTICAL_PAD = UiScale.s(4);
-	public static final int MIN_BUTTON_HEIGHT = UiScale.s(17);
+	public static final int BUTTON_EXTRA_VERTICAL_PAD = UiScale.s(4);
+	public static final int EFFECT_EXTRA_VERTICAL_PAD = UiScale.s(2);
+	public static final int MIN_BUTTON_HEIGHT = UiScale.s(15);
 	public static final double PICKER_SCALE = 0.90D;
 	public static final int EFFECT_COLUMNS = 3;
 
@@ -36,6 +36,7 @@ public final class TextStylePanelLayout {
 
 	public record Metrics(
 		boolean gradientExpanded,
+		boolean partsCollapsed,
 		int contentTopOffset,
 		int buttonHeight,
 		int effectButtonHeight,
@@ -58,10 +59,29 @@ public final class TextStylePanelLayout {
 			return LabeledFieldLayout.FIELD_HEIGHT + BUTTON_ROW_GAP;
 		}
 
+		public boolean hasPartToggle(int partCount) {
+			return partCount > 1;
+		}
+
+		public int partListTop(int partCount) {
+			if (!hasPartToggle(partCount)) {
+				return partTop();
+			}
+			return partTop() + buttonHeight + BUTTON_ROW_GAP;
+		}
+
+		public int visiblePartRows(int partCount) {
+			if (partsCollapsed && hasPartToggle(partCount)) {
+				return 1;
+			}
+			return Math.max(1, partCount);
+		}
+
 		public int partsSectionHeight(int partCount) {
-			int rows = Math.max(1, partCount);
+			int toggle = hasPartToggle(partCount) ? buttonHeight + BUTTON_ROW_GAP : 0;
+			int rows = visiblePartRows(partCount);
 			int addButton = partCount < 6 ? buttonHeight + BUTTON_ROW_GAP : 0;
-			return rows * partRowHeight() + addButton;
+			return toggle + rows * partRowHeight() + addButton;
 		}
 
 		public int colorsLabelTop(int partCount) {
@@ -138,6 +158,10 @@ public final class TextStylePanelLayout {
 	}
 
 	public static Metrics metrics(int partCount, int contentTopOffset, boolean gradientExpanded) {
+		return metrics(partCount, contentTopOffset, gradientExpanded, false);
+	}
+
+	public static Metrics metrics(int partCount, int contentTopOffset, boolean gradientExpanded, boolean partsCollapsed) {
 		Font font = Minecraft.getInstance().font;
 		int buttonHeight = Math.max(
 			MIN_BUTTON_HEIGHT,
@@ -171,6 +195,7 @@ public final class TextStylePanelLayout {
 
 		return new Metrics(
 			gradientExpanded,
+			partsCollapsed,
 			contentTopOffset,
 			buttonHeight,
 			effectButtonHeight,

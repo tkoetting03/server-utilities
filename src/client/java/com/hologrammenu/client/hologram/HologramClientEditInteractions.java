@@ -20,7 +20,9 @@ import net.minecraft.world.phys.EntityHitResult;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -107,23 +109,55 @@ public final class HologramClientEditInteractions {
 		if (!(entity instanceof net.minecraft.world.entity.Display.TextDisplay display)) {
 			return HologramLineStack.defaults("");
 		}
-		UUID groupId = HologramLineStack.groupId(display);
-		if (groupId == null || client.level == null) {
+		String groupId = registryOrTagGroupId(display);
+		if (groupId.isBlank() || client.level == null) {
 			String text = TextFormats.fromComponent(((TextDisplayAccessor) display).hologrammenu$getText());
 			return HologramLineStack.parseLegacyText(text, HologramScale.getScale(display));
 		}
 
-		List<net.minecraft.world.entity.Display.TextDisplay> group = new ArrayList<>();
+		Map<Integer, net.minecraft.world.entity.Display.TextDisplay> group = new LinkedHashMap<>();
+		for (int entityId : HologramClientRegistry.knownIds()) {
+			Entity candidate = client.level.getEntity(entityId);
+			if (candidate instanceof net.minecraft.world.entity.Display.TextDisplay line
+				&& groupId.equals(registryOrTagGroupId(line))) {
+				group.put(line.getId(), line);
+			}
+		}
 		for (Entity candidate : client.level.entitiesForRendering()) {
 			if (candidate instanceof net.minecraft.world.entity.Display.TextDisplay line
 				&& HologramClientRegistry.isEditableHologram(line)
-				&& groupId.equals(HologramLineStack.groupId(line))) {
-				group.add(line);
+				&& groupId.equals(registryOrTagGroupId(line))) {
+				group.put(line.getId(), line);
 			}
 		}
-		group.sort(Comparator.comparingInt(HologramLineStack::lineIndex));
-		return group.isEmpty()
+		for (net.minecraft.world.entity.Display.TextDisplay line : client.level.getEntities(
+			net.minecraft.world.entity.EntityType.TEXT_DISPLAY,
+			display.getBoundingBox().inflate(2.0D, 4.0D, 2.0D),
+			candidate -> HologramClientRegistry.isEditableHologram(candidate)
+				&& groupId.equals(registryOrTagGroupId(candidate))
+		)) {
+			group.put(line.getId(), line);
+		}
+		List<net.minecraft.world.entity.Display.TextDisplay> sortedGroup = new ArrayList<>(group.values());
+		sortedGroup.sort(Comparator.comparingInt(HologramClientEditInteractions::registryOrTagLineIndex));
+		return sortedGroup.isEmpty()
 			? HologramLineStack.parseLegacyText(TextFormats.fromComponent(((TextDisplayAccessor) display).hologrammenu$getText()), HologramScale.getScale(display))
-			: HologramLineStack.readGroup(group);
+			: HologramLineStack.readGroup(sortedGroup);
+	}
+
+	private static String registryOrTagGroupId(Entity entity) {
+		String registryGroup = HologramClientRegistry.groupId(entity);
+		if (!registryGroup.isBlank()) {
+			return registryGroup;
+		}
+		UUID tagGroup = HologramLineStack.groupId(entity);
+		return tagGroup == null ? "" : tagGroup.toString();
+	}
+
+	private static int registryOrTagLineIndex(Entity entity) {
+		if (!HologramClientRegistry.groupId(entity).isBlank()) {
+			return HologramClientRegistry.lineIndex(entity);
+		}
+		return HologramLineStack.lineIndex(entity);
 	}
 }

@@ -5,7 +5,7 @@ public final class StorageMenuEditorMetrics {
 	public static final int PANEL_PADDING = ModPanelLayout.PANEL_PADDING;
 	public static final int CONTENT_WIDTH = ModPanelLayout.CONTENT_WIDTH;
 	public static final int HEADER_TOP = UiScale.s(14);
-	public static final int TAB_ROW_HEIGHT = UiScale.s(20);
+	public static final int TAB_ROW_HEIGHT = UiLayoutHelper.defaultButtonHeight() + UiScale.s(4);
 	public static final int CONTENT_TOP = HEADER_TOP + TAB_ROW_HEIGHT;
 	public static final int SLOT_SIZE = UiScale.s(UiScale.SLOT_BASE);
 	public static final int SLOT_STEP = SLOT_SIZE;

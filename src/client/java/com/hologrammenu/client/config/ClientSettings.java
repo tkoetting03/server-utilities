@@ -9,6 +9,8 @@ public final class ClientSettings {
 	public static boolean npcPlacementModeEnabled = false;
 	public static boolean npcEditModeEnabled = false;
 	public static boolean hologramEditModeEnabled = false;
+	public static boolean styleWidgetEnabled = true;
+	public static boolean containerEditorWidgetEnabled = true;
 	public static String defaultPlacementText = "Hologram";
 
 	public static NpcKind npcKind = NpcKind.VILLAGER;
@@ -45,6 +47,8 @@ public final class ClientSettings {
 		defaultPlacementText = config.defaultPlacementText != null && !config.defaultPlacementText.isBlank()
 			? config.defaultPlacementText
 			: "Hologram";
+		styleWidgetEnabled = config.styleWidgetEnabled == null || config.styleWidgetEnabled;
+		containerEditorWidgetEnabled = config.containerEditorWidgetEnabled == null || config.containerEditorWidgetEnabled;
 	}
 
 	public static String currentNpcProfessionId() {

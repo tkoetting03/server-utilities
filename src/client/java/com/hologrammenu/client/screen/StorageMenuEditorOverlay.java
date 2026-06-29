@@ -11,8 +11,13 @@ import com.hologrammenu.client.screen.widget.StorageMenuTreeNodeWidget;
 import com.hologrammenu.client.screen.widget.DraggableTitleBarWidget;
 import com.hologrammenu.client.screen.widget.LabeledFieldLayout;
 import com.hologrammenu.client.screen.widget.ModPanelLayout;
+import com.hologrammenu.client.screen.widget.FloatScaleSlider;
+import com.hologrammenu.client.screen.widget.HologramHeightSlider;
+import com.hologrammenu.client.screen.widget.StorageMenuHologramSettingsPanelWidget;
 import com.hologrammenu.client.screen.widget.StorageMenuSlotButton;
+import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScale;
+import com.hologrammenu.client.screen.widget.VanillaIconButton;
 import com.hologrammenu.client.storage.StorageMenuClientTracker;
 import com.hologrammenu.storage.ShopItemRules;
 import com.hologrammenu.network.ModPackets;
@@ -23,6 +28,7 @@ import com.hologrammenu.storage.StorageMenuChrome;
 import com.hologrammenu.storage.StorageMenuDefinition;
 import com.hologrammenu.storage.StorageMenuFillerItems;
 import com.hologrammenu.storage.StorageMenuNetwork;
+import com.hologrammenu.storage.StorageMenuHologramSettings;
 import com.hologrammenu.storage.StorageMenuSlotConfig;
 import com.hologrammenu.storage.StorageMenuSlotType;
 import com.hologrammenu.storage.StorageMenuViewContext;
@@ -44,6 +50,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,7 +58,14 @@ import java.util.List;
 import java.util.Map;
 
 public final class StorageMenuEditorOverlay {
-	private record CachedDraft(int containerSize, String title, Map<Integer, StorageMenuSlotConfig> slots, boolean invulnerable, boolean hologramLabel) {
+	private record CachedDraft(
+		int containerSize,
+		String title,
+		Map<Integer, StorageMenuSlotConfig> slots,
+		boolean invulnerable,
+		boolean hologramLabel,
+		StorageMenuHologramSettings hologramSettings
+	) {
 	}
 
 	private static final Map<Screen, StorageMenuEditorOverlay> ACTIVE = new java.util.WeakHashMap<>();
@@ -71,6 +85,8 @@ public final class StorageMenuEditorOverlay {
 	private boolean awaitingSync;
 	private boolean invulnerable;
 	private boolean hologramLabel;
+	private StorageMenuHologramSettings hologramSettings = StorageMenuHologramSettings.DEFAULT;
+	private boolean hologramSettingsOpen;
 	private boolean autoApplying;
 	private boolean updatingFields;
 
@@ -89,7 +105,9 @@ public final class StorageMenuEditorOverlay {
 	private EditBox costItemField;
 	private Button typeButton;
 	private Button nameButton;
+	private Button invulnerableButton;
 	private Button hologramLabelButton;
+	private Button hologramSettingsButton;
 	private Button menuTabButton;
 	private Button shopTabButton;
 
@@ -255,6 +273,7 @@ public final class StorageMenuEditorOverlay {
 		menuTitle = menuData.title() == null ? "" : menuData.title();
 		invulnerable = menuData.invulnerable();
 		hologramLabel = menuData.hologramLabel();
+		hologramSettings = menuData.hologramSettings() == null ? StorageMenuHologramSettings.DEFAULT : menuData.hologramSettings();
 		refreshHologramLabelButton();
 		if (menuData.viewContext().isRoot()) {
 			shopListings.clear();
@@ -409,6 +428,9 @@ public final class StorageMenuEditorOverlay {
 		if (canToggleHologramLabel()) {
 			height += StorageMenuEditorMetrics.FOOTER_BUTTON_HEIGHT + StorageMenuEditorMetrics.FOOTER_ROW_GAP;
 		}
+		if (canEditHologramSettings()) {
+			height += StorageMenuEditorMetrics.FOOTER_BUTTON_HEIGHT + StorageMenuEditorMetrics.FOOTER_ROW_GAP;
+		}
 		height += StorageMenuEditorMetrics.FOOTER_BUTTON_HEIGHT;
 		height += StorageMenuEditorMetrics.SECTION_GAP;
 		return height;
@@ -453,7 +475,8 @@ public final class StorageMenuEditorOverlay {
 				menuData.title() == null ? "" : menuData.title(),
 				slots,
 				menuData.invulnerable(),
-				menuData.hologramLabel()
+				menuData.hologramLabel(),
+				menuData.hologramSettings()
 			)
 		);
 	}
@@ -510,7 +533,7 @@ public final class StorageMenuEditorOverlay {
 	private void cacheCurrentDraft() {
 		draftCache.put(
 			StorageMenuInventoryTree.draftKey(viewContext),
-			new CachedDraft(containerSize, menuTitle, new HashMap<>(draftSlots), invulnerable, hologramLabel)
+			new CachedDraft(containerSize, menuTitle, new HashMap<>(draftSlots), invulnerable, hologramLabel, hologramSettings)
 		);
 	}
 
@@ -527,6 +550,7 @@ public final class StorageMenuEditorOverlay {
 		menuTitle = cached.title();
 		invulnerable = cached.invulnerable();
 		hologramLabel = cached.hologramLabel();
+		hologramSettings = cached.hologramSettings() == null ? StorageMenuHologramSettings.DEFAULT : cached.hologramSettings();
 		draftSlots.clear();
 		draftSlots.putAll(cached.slots());
 		return true;
@@ -580,6 +604,9 @@ public final class StorageMenuEditorOverlay {
 			buildMenuWidgets(panelX, panelY, pad, contentWidth);
 		}
 		activeDragGroup = null;
+		if (hologramSettingsOpen && canEditHologramSettings()) {
+			buildHologramSettingsPanel(panelX, panelY);
+		}
 		attachDraggableTitle(
 			editorDragGroup,
 			Component.translatable("screen.hologrammenu.storage_menu.title"),
@@ -719,44 +746,120 @@ public final class StorageMenuEditorOverlay {
 		int buttonH = StorageMenuEditorMetrics.FOOTER_BUTTON_HEIGHT;
 		int rowGap = StorageMenuEditorMetrics.FOOTER_ROW_GAP;
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.storage_menu.insert_item"), press -> openInsertItemPicker())
-			.bounds(x, actionY, contentWidth, buttonH).build(), true);
+		attach(VanillaIconButton.create(x, actionY, contentWidth, buttonH, Component.translatable("screen.hologrammenu.storage_menu.insert_item"), new ItemStack(Items.ITEM_FRAME), press -> openInsertItemPicker()), true);
 
 		int nameFillY = actionY + buttonH + rowGap;
 		int halfWidth = columnWidth(contentWidth, 2, rowGap);
-		Button nameButtonWidget = Button.builder(Component.translatable("screen.hologrammenu.storage_menu.name_item"), press -> toggleNameEditor())
-			.bounds(x, nameFillY, halfWidth, buttonH).build();
+		Button nameButtonWidget = VanillaIconButton.create(x, nameFillY, halfWidth, buttonH, Component.translatable("screen.hologrammenu.storage_menu.name_item"), new ItemStack(Items.NAME_TAG), press -> toggleNameEditor());
 		nameButtonWidget.active = canNameSelectedSlot();
 		nameButton = nameButtonWidget;
 		attach(nameButtonWidget, true);
-		attach(Button.builder(Component.translatable("screen.hologrammenu.storage_menu.fill_filler"), press -> fillFiller())
-			.bounds(x + halfWidth + rowGap, nameFillY, halfWidth, buttonH).build(), true);
+		attach(VanillaIconButton.create(x + halfWidth + rowGap, nameFillY, halfWidth, buttonH, Component.translatable("screen.hologrammenu.storage_menu.fill_filler"), StorageMenuFillerItems.defaultFiller(), press -> fillFiller()), true);
 
 		int applyRowY = nameFillY + buttonH + StorageMenuEditorMetrics.FOOTER_SECTION_GAP;
 		if (canResizeChest()) {
-			attach(Button.builder(chestSizeLabel(), press -> toggleChestSize())
-				.bounds(x, applyRowY, contentWidth, buttonH).build(), true);
+			attach(VanillaIconButton.create(x, applyRowY, contentWidth, buttonH, chestSizeLabel(), new ItemStack(Items.CHEST), press -> toggleChestSize()), true);
 			applyRowY += buttonH + rowGap;
 		}
 		if (canToggleInvulnerable()) {
-			attach(Button.builder(invulnerableLabel(), press -> toggleInvulnerable())
-				.bounds(x, applyRowY, contentWidth, buttonH).build(), true);
+			invulnerableButton = VanillaIconButton.create(x, applyRowY, contentWidth, buttonH, invulnerableLabel(), new ItemStack(Items.IRON_DOOR), press -> toggleInvulnerable());
+			attach(invulnerableButton, true);
 			applyRowY += buttonH + rowGap;
 		}
 		if (canToggleHologramLabel()) {
-			hologramLabelButton = Button.builder(hologramLabelButtonLabel(), press -> toggleHologramLabel())
-				.bounds(x, applyRowY, contentWidth, buttonH).build();
+			hologramLabelButton = VanillaIconButton.create(x, applyRowY, contentWidth, buttonH, hologramLabelButtonLabel(), new ItemStack(Items.GLOW_INK_SAC), press -> toggleHologramLabel());
 			attach(hologramLabelButton, true);
+			applyRowY += buttonH + rowGap;
+		}
+		if (canEditHologramSettings()) {
+			hologramSettingsButton = VanillaIconButton.create(
+				x,
+				applyRowY,
+				contentWidth,
+				buttonH,
+				Component.translatable("screen.hologrammenu.storage_menu.hologram_settings"),
+				new ItemStack(Items.REPEATER),
+				press -> toggleHologramSettingsPanel()
+			);
+			attach(hologramSettingsButton, true);
 			applyRowY += buttonH + rowGap;
 		}
 
 		int actionWidth = columnWidth(contentWidth, 2, rowGap);
-		attach(Button.builder(Component.translatable("screen.hologrammenu.storage_menu.clear"), press -> clearMenu())
-			.bounds(x, applyRowY, actionWidth, buttonH).build(), true);
-		attach(Button.builder(Component.translatable("screen.hologrammenu.storage_menu.done"), press -> close())
-			.bounds(x + actionWidth + rowGap, applyRowY, actionWidth, buttonH).build(), true);
+		attach(VanillaIconButton.create(x, applyRowY, actionWidth, buttonH, Component.translatable("screen.hologrammenu.storage_menu.clear"), new ItemStack(Items.BARRIER), press -> clearMenu()), true);
+		attach(VanillaIconButton.create(x + actionWidth + rowGap, applyRowY, actionWidth, buttonH, Component.translatable("screen.hologrammenu.storage_menu.done"), new ItemStack(Items.LIME_DYE), press -> close()), true);
 
 		reattachTitleStyleOverlay();
+	}
+
+	private boolean canEditHologramSettings() {
+		return canToggleHologramLabel() && !viewContext.isNpcAnchored();
+	}
+
+	private void toggleHologramSettingsPanel() {
+		hologramSettingsOpen = !hologramSettingsOpen;
+		scheduleRebuild();
+	}
+
+	private void buildHologramSettingsPanel(int editorX, int editorY) {
+		int buttonH = UiLayoutHelper.defaultButtonHeight();
+		int gap = ModPanelLayout.ROW_GAP;
+		int panelHeight = StorageMenuHologramSettingsPanelWidget.CONTENT_TOP
+			+ buttonH + gap
+			+ buttonH + gap
+			+ buttonH
+			+ ModPanelLayout.PANEL_PADDING;
+		int panelX = layout.hologrammenu$getLeftPos() + layout.hologrammenu$getImageWidth() + ModPanelLayout.PANEL_HORIZONTAL_GAP;
+		int panelY = layout.hologrammenu$getTopPos();
+		int x = panelX + ModPanelLayout.PANEL_PADDING;
+		int y = panelY + StorageMenuHologramSettingsPanelWidget.CONTENT_TOP;
+		int width = StorageMenuHologramSettingsPanelWidget.PANEL_WIDTH - ModPanelLayout.PANEL_PADDING * 2;
+
+		attach(new StorageMenuHologramSettingsPanelWidget(panelX, panelY, panelHeight), false);
+		attach(new HologramHeightSlider(
+			x,
+			y,
+			width,
+			Component.translatable("screen.hologrammenu.storage_menu.hologram_height"),
+			hologramSettings.heightOffset(),
+			() -> hologramSettings.heightOffset(),
+			value -> {
+				hologramSettings = hologramSettings.withHeightOffset(value);
+				autoApply();
+			},
+			() -> {
+			}
+		), true);
+		y += buttonH + gap;
+
+		attach(new FloatScaleSlider(
+			x,
+			y,
+			width,
+			Component.translatable("screen.hologrammenu.storage_menu.hologram_size"),
+			hologramSettings.scale(),
+			() -> hologramSettings.scale(),
+			value -> {
+				hologramSettings = hologramSettings.withScale(value);
+				autoApply();
+			},
+			() -> {
+			}
+		), true);
+		y += buttonH + gap;
+
+		attach(VanillaIconButton.create(
+			x,
+			y,
+			width,
+			buttonH,
+			Component.translatable("screen.hologrammenu.storage_menu.hologram_settings_close"),
+			new ItemStack(Items.LIME_DYE),
+			press -> {
+				hologramSettingsOpen = false;
+				scheduleRebuild();
+			}
+		), true);
 	}
 
 	private void buildShopWidgets(int panelX, int panelY, int pad, int contentWidth) {
@@ -767,8 +870,15 @@ public final class StorageMenuEditorOverlay {
 		int buttonH = StorageMenuEditorMetrics.FOOTER_BUTTON_HEIGHT;
 		int rowGap = StorageMenuEditorMetrics.FOOTER_ROW_GAP;
 
-		attach(Button.builder(shopEnabledLabel(), press -> toggleShopEnabled())
-			.bounds(x, panelY + StorageMenuEditorMetrics.CONTENT_TOP, contentWidth, buttonH).build(), true);
+		attach(VanillaIconButton.create(
+			x,
+			panelY + StorageMenuEditorMetrics.CONTENT_TOP,
+			contentWidth,
+			buttonH,
+			shopEnabledLabel(),
+			new ItemStack(Items.EMERALD),
+			press -> toggleShopEnabled()
+		), true);
 
 		int gridWidth = columns * StorageMenuEditorMetrics.SLOT_STEP;
 		int gridX = x + Math.max(0, (contentWidth - gridWidth) / 2);
@@ -797,22 +907,50 @@ public final class StorageMenuEditorOverlay {
 
 		int actionY = nextY;
 		int halfWidth = columnWidth(contentWidth, 2, rowGap);
-		Button useProductButton = Button.builder(Component.translatable("screen.hologrammenu.shop.use_product"), press -> useHeldShopProduct())
-			.bounds(x, actionY, halfWidth, buttonH).build();
+		Button useProductButton = VanillaIconButton.create(
+			x,
+			actionY,
+			halfWidth,
+			buttonH,
+			Component.translatable("screen.hologrammenu.shop.use_product"),
+			new ItemStack(Items.CHEST),
+			press -> useHeldShopProduct()
+		);
 		useProductButton.active = isShopItemSlot(selectedShopSlot);
 		attach(useProductButton, true);
-		Button shopNameButton = Button.builder(Component.translatable("screen.hologrammenu.storage_menu.name_item"), press -> toggleNameEditor())
-			.bounds(x + halfWidth + rowGap, actionY, halfWidth, buttonH).build();
+		Button shopNameButton = VanillaIconButton.create(
+			x + halfWidth + rowGap,
+			actionY,
+			halfWidth,
+			buttonH,
+			Component.translatable("screen.hologrammenu.storage_menu.name_item"),
+			new ItemStack(Items.NAME_TAG),
+			press -> toggleNameEditor()
+		);
 		shopNameButton.active = isShopItemSlot(selectedShopSlot) && canNameGuiVisibleSlot();
 		nameButton = shopNameButton;
 		attach(shopNameButton, true);
 
 		int applyRowY = actionY + buttonH + StorageMenuEditorMetrics.FOOTER_SECTION_GAP;
 		int actionWidth = columnWidth(contentWidth, 2, rowGap);
-		attach(Button.builder(Component.translatable("screen.hologrammenu.shop.clear"), press -> clearShop())
-			.bounds(x, applyRowY, actionWidth, buttonH).build(), true);
-		attach(Button.builder(Component.translatable("screen.hologrammenu.storage_menu.done"), press -> close())
-			.bounds(x + actionWidth + rowGap, applyRowY, actionWidth, buttonH).build(), true);
+		attach(VanillaIconButton.create(
+			x,
+			applyRowY,
+			actionWidth,
+			buttonH,
+			Component.translatable("screen.hologrammenu.shop.clear"),
+			new ItemStack(Items.BARRIER),
+			press -> clearShop()
+		), true);
+		attach(VanillaIconButton.create(
+			x + actionWidth + rowGap,
+			applyRowY,
+			actionWidth,
+			buttonH,
+			Component.translatable("screen.hologrammenu.storage_menu.done"),
+			new ItemStack(Items.LIME_DYE),
+			press -> close()
+		), true);
 	}
 
 	private void attachInventoryTree() {
@@ -923,7 +1061,9 @@ public final class StorageMenuEditorOverlay {
 		costItemField = null;
 		typeButton = null;
 		nameButton = null;
+		invulnerableButton = null;
 		hologramLabelButton = null;
+		hologramSettingsButton = null;
 		if (menuTabButton != null) {
 			ModUiSelectionState.unmarkSelected(menuTabButton);
 		}
@@ -1051,7 +1191,7 @@ public final class StorageMenuEditorOverlay {
 	private int attachTitleRow(int x, int labelY, int contentWidth) {
 		attachLabel(x, labelY, contentWidth, Component.translatable("screen.hologrammenu.storage_menu.container_title"));
 		int fieldY = labelY + LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP;
-		int styleWidth = UiScale.s(40);
+		int styleWidth = UiLayoutHelper.buttonWidth(Minecraft.getInstance().font, Component.translatable("screen.hologrammenu.hologram_options.style"));
 		int gap = UiScale.s(4);
 		int fieldWidth = contentWidth - styleWidth - gap;
 
@@ -1276,7 +1416,7 @@ public final class StorageMenuEditorOverlay {
 
 	private StorageMenuNetwork.MenuData buildMenuData(StorageMenuDefinition definition) {
 		ShopDefinition shop = buildShopDefinition();
-		return StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, invulnerable, hologramLabel, shop);
+		return StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, invulnerable, hologramLabel, hologramSettings, shop);
 	}
 
 	private ShopDefinition buildShopDefinition() {
@@ -1467,7 +1607,7 @@ public final class StorageMenuEditorOverlay {
 		}
 	}
 
-	private int attachShopItemFields(int x, int y, int contentWidth, int slotIndex, boolean includeCostFields) {
+	private int attachShopItemFields(int x, int y, int contentWidth, int slotIndex, boolean includePurchaseFields) {
 		int nextY = attachLabeledField(x, y, Component.translatable("screen.hologrammenu.shop.product"), field -> {
 			shopProductField = field;
 			field.setMaxLength(128);
@@ -1478,9 +1618,9 @@ public final class StorageMenuEditorOverlay {
 				}
 			});
 		});
-		nextY = attachShopProductAmountFields(x, nextY, contentWidth, slotIndex);
 
-		if (includeCostFields) {
+		if (includePurchaseFields) {
+			nextY = attachShopProductAmountFields(x, nextY, contentWidth, slotIndex);
 			nextY = attachShopCostFields(x, nextY, contentWidth, slotIndex);
 		}
 
@@ -1748,6 +1888,9 @@ public final class StorageMenuEditorOverlay {
 
 	private void toggleInvulnerable() {
 		invulnerable = !invulnerable;
+		if (invulnerableButton != null) {
+			invulnerableButton.setMessage(invulnerableLabel());
+		}
 		autoApply();
 	}
 

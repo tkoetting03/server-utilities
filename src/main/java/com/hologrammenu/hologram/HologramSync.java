@@ -12,13 +12,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.UUID;
 
 public final class HologramSync {
 	private HologramSync() {
 	}
 
 	public static void track(ServerLevel level, Display.TextDisplay display) {
-		ModPackets.HologramTrackPayload payload = new ModPackets.HologramTrackPayload(display.getId());
+		ModPackets.HologramTrackPayload payload = payload(display);
 		java.util.Set<ServerPlayer> recipients = new java.util.HashSet<>(PlayerLookup.tracking(display));
 		recipients.addAll(PlayerLookup.around(level, display.position(), 64.0D));
 		for (ServerPlayer player : recipients) {
@@ -39,12 +40,21 @@ public final class HologramSync {
 
 	public static void syncPlayer(ServerPlayer player) {
 		ServerLevel level = (ServerLevel) player.level();
-		List<Integer> entityIds = new java.util.ArrayList<>();
+		List<ModPackets.HologramTrackPayload> holograms = new java.util.ArrayList<>();
 		for (Entity entity : level.getAllEntities()) {
 			if (entity instanceof Display.TextDisplay display && HologramHelper.isHologram(display)) {
-				entityIds.add(display.getId());
+				holograms.add(payload(display));
 			}
 		}
-		ServerPlayNetworking.send(player, new ModPackets.HologramSyncPayload(entityIds));
+		ServerPlayNetworking.send(player, new ModPackets.HologramSyncPayload(holograms));
+	}
+
+	private static ModPackets.HologramTrackPayload payload(Display.TextDisplay display) {
+		UUID groupId = HologramLineStack.groupId(display);
+		return new ModPackets.HologramTrackPayload(
+			display.getId(),
+			groupId == null ? "" : groupId.toString(),
+			HologramLineStack.lineIndex(display)
+		);
 	}
 }

@@ -20,6 +20,8 @@ public final class ClientConfig {
 	private static ClientConfig instance = new ClientConfig();
 
 	public String defaultPlacementText = "Hologram";
+	public Boolean styleWidgetEnabled = true;
+	public Boolean containerEditorWidgetEnabled = true;
 
 	public static ClientConfig get() {
 		return instance;
@@ -56,5 +58,17 @@ public final class ClientConfig {
 
 	public static void setPlacementModeEnabled(boolean enabled) {
 		ClientSettings.placementModeEnabled = enabled;
+	}
+
+	public static void setStyleWidgetEnabled(boolean enabled) {
+		instance.styleWidgetEnabled = enabled;
+		ClientSettings.styleWidgetEnabled = enabled;
+		save();
+	}
+
+	public static void setContainerEditorWidgetEnabled(boolean enabled) {
+		instance.containerEditorWidgetEnabled = enabled;
+		ClientSettings.containerEditorWidgetEnabled = enabled;
+		save();
 	}
 }

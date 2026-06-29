@@ -15,9 +15,7 @@ import com.hologrammenu.npc.NpcMenuStore;
 import com.hologrammenu.npc.NpcParticleEffects;
 import com.hologrammenu.npc.NpcPlacementMode;
 import com.hologrammenu.npc.NpcSync;
-import com.hologrammenu.head.HeadPresetService;
 import com.hologrammenu.itemstyler.ItemStylerSessions;
-import com.hologrammenu.npc.PlayerHeadHelper;
 import com.hologrammenu.anvil.AnvilLoreSession;
 import com.hologrammenu.storage.StorageMenuItemLore;
 import com.hologrammenu.storage.StorageMenuPermissions;
@@ -44,7 +42,6 @@ public final class NetworkHandler {
 	private static final int MAX_NPC_NAME_LENGTH = 64;
 	private static final int MAX_PROFILE_NAME_LENGTH = 64;
 	private static final int MAX_NPC_DIALOGUE_LENGTH = 1024;
-	private static final int MAX_HEAD_TEXTURE_BASE64_LENGTH = 8192;
 
 	private NetworkHandler() {
 	}
@@ -73,9 +70,6 @@ public final class NetworkHandler {
 			PayloadTypeRegistry.serverboundPlay().register(ModPackets.NpcOpenMenuPayload.TYPE, ModPackets.NpcOpenMenuPayload.CODEC);
 			PayloadTypeRegistry.serverboundPlay().register(ModPackets.ItemStylerOpenPayload.TYPE, ModPackets.ItemStylerOpenPayload.CODEC);
 			PayloadTypeRegistry.serverboundPlay().register(ModPackets.ItemStylerApplyNamePayload.TYPE, ModPackets.ItemStylerApplyNamePayload.CODEC);
-			PayloadTypeRegistry.serverboundPlay().register(ModPackets.GivePlayerHeadPayload.TYPE, ModPackets.GivePlayerHeadPayload.CODEC);
-			PayloadTypeRegistry.serverboundPlay().register(ModPackets.HeadPresetListRequestPayload.TYPE, ModPackets.HeadPresetListRequestPayload.CODEC);
-			PayloadTypeRegistry.clientboundPlay().register(ModPackets.HeadPresetListResponsePayload.TYPE, ModPackets.HeadPresetListResponsePayload.CODEC);
 			PayloadTypeRegistry.serverboundPlay().register(ModPackets.AnvilSetLorePayload.TYPE, ModPackets.AnvilSetLorePayload.CODEC);
 			PayloadTypeRegistry.clientboundPlay().register(ModPackets.StorageMenuSyncPayload.TYPE, ModPackets.StorageMenuSyncPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.StorageMenuContextPayload.TYPE, ModPackets.StorageMenuContextPayload.CODEC);
@@ -139,17 +133,7 @@ public final class NetworkHandler {
 			context.server().execute(() -> handleItemStylerApplyName(player, payload));
 		});
 
-		ServerPlayNetworking.registerGlobalReceiver(ModPackets.GivePlayerHeadPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			context.server().execute(() -> handleGivePlayerHead(player, payload));
-		});
-
-		ServerPlayNetworking.registerGlobalReceiver(ModPackets.HeadPresetListRequestPayload.TYPE, (payload, context) -> {
-			ServerPlayer player = context.player();
-			context.server().execute(() -> HeadPresetService.handleListRequest(player, payload));
-		});
-
-			ServerPlayNetworking.registerGlobalReceiver(ModPackets.AnvilSetLorePayload.TYPE, (payload, context) -> {
+				ServerPlayNetworking.registerGlobalReceiver(ModPackets.AnvilSetLorePayload.TYPE, (payload, context) -> {
 				ServerPlayer player = context.player();
 				context.server().execute(() -> handleAnvilSetLore(player, payload));
 			});
@@ -256,22 +240,6 @@ public final class NetworkHandler {
 		player.sendSystemMessage(Component.translatable("hud.hologrammenu.npc.placed"));
 	}
 
-	private static void handleGivePlayerHead(ServerPlayer player, ModPackets.GivePlayerHeadPayload payload) {
-		if (!StorageMenuPermissions.canEdit(player)) {
-			return;
-		}
-
-		String headDatabaseId = clamp(payload.headDatabaseId(), MAX_PROFILE_NAME_LENGTH);
-		String headDatabaseBase64 = clamp(payload.headDatabaseBase64(), MAX_HEAD_TEXTURE_BASE64_LENGTH);
-		String profileName = clamp(payload.profileName(), MAX_PROFILE_NAME_LENGTH);
-		if ((headDatabaseId == null || headDatabaseId.isBlank()) && (profileName == null || profileName.isBlank())) {
-			player.sendSystemMessage(Component.translatable("hud.hologrammenu.player_head.missing_name"));
-			return;
-		}
-
-		PlayerHeadHelper.give(player, profileName, headDatabaseId, headDatabaseBase64);
-	}
-
 	private static void handleAnvilSetLore(ServerPlayer player, ModPackets.AnvilSetLorePayload payload) {
 		java.util.List<String> lines = new java.util.ArrayList<>();
 		for (String line : payload.lines()) {
@@ -354,12 +322,12 @@ public final class NetworkHandler {
 				if (living instanceof Mannequin && (payload.skinName() == null || payload.skinName().isBlank())) {
 					player.sendSystemMessage(Component.translatable("hud.hologrammenu.npc.missing_skin"));
 					return;
-				}
-				NpcConfig config = new NpcConfig(
-					payload.headFollowEnabled(),
-					NpcConfig.clampRadius(payload.headFollowRadius()),
-					clamp(payload.dialogue(), MAX_NPC_DIALOGUE_LENGTH),
-					payload.containerEnabled(),
+					}
+					NpcConfig config = new NpcConfig(
+						payload.headFollowEnabled(),
+						NpcConfig.clampRadius(payload.headFollowRadius()),
+						clamp(payload.dialogue(), MAX_NPC_DIALOGUE_LENGTH),
+						payload.containerEnabled(),
 					NpcConfig.normalizeContainerSize(payload.containerSize()),
 					payload.particleEffectEnabled(),
 					NpcParticleEffects.sanitizeParticleId(clamp(payload.particleEffectId(), MAX_NPC_NAME_LENGTH))

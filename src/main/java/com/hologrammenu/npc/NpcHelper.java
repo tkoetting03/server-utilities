@@ -1,7 +1,6 @@
 package com.hologrammenu.npc;
 
 import com.hologrammenu.HologramMenuMod;
-import com.hologrammenu.head.HeadProfileHelper;
 import com.hologrammenu.mixin.accessor.MannequinAccessor;
 import com.hologrammenu.text.TextFormats;
 import net.minecraft.core.Holder;
@@ -157,7 +156,7 @@ public final class NpcHelper {
 			if (skinName != null && !skinName.isBlank()) {
 				String trimmed = skinName.trim();
 				entity.addTag(SKIN_TAG_PREFIX + trimmed);
-				HeadProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
+				SkinProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
 					((MannequinAccessor) mannequin).hologrammenu$setProfile(profile)
 				);
 			}
@@ -201,7 +200,7 @@ public final class NpcHelper {
 		if (skinName != null && !skinName.isBlank()) {
 			String trimmed = skinName.trim();
 			mannequin.addTag(SKIN_TAG_PREFIX + trimmed);
-			HeadProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
+			SkinProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
 				((MannequinAccessor) mannequin).hologrammenu$setProfile(profile)
 			);
 		}

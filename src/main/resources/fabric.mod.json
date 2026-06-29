@@ -4,6 +4,7 @@
 	"version": "${version}",
 	"name": "Hologram Menu Mod",
 	"description": "Create persistent text holograms, interactive menus with container popups, and anvil text styling.",
+	"icon": "assets/hologrammenu/icon.png",
 	"authors": [
 		"HologramMenu"
 	],

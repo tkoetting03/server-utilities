@@ -2,6 +2,7 @@ package com.hologrammenu.client.mixin;
 
 import com.hologrammenu.client.mixin.accessor.AbstractContainerScreenAccessor;
 import com.hologrammenu.client.mixin.accessor.ScreenInvoker;
+import com.hologrammenu.client.config.ClientSettings;
 import com.hologrammenu.client.screen.EditorMousePreservation;
 import com.hologrammenu.client.screen.StorageMenuEditorOverlay;
 import com.hologrammenu.client.screen.widget.StorageMenuTabWidget;
@@ -39,6 +40,14 @@ public abstract class StorageContainerScreenMixin {
 		}
 
 		if (!StorageMenuClientPermissions.canEdit()) {
+			return;
+		}
+
+		if (!ClientSettings.containerEditorWidgetEnabled) {
+			if (hologrammenu$storageMenuOverlay != null) {
+				hologrammenu$storageMenuOverlay.dispose();
+			}
+			hologrammenu$storageMenuTab = null;
 			return;
 		}
 

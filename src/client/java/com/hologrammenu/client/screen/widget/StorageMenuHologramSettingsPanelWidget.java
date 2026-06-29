@@ -5,35 +5,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 
-public final class HeadPresetPickerPanelWidget extends AbstractWidget {
-	public static final int COLS = 9;
-	public static final int VISIBLE_ROWS = 9;
-	private static final int SLOT_SIZE = UiScale.s(UiScale.HEAD_PRESET_SLOT_BASE);
+public final class StorageMenuHologramSettingsPanelWidget extends AbstractWidget {
+	public static final int PANEL_WIDTH = ModPanelLayout.PANEL_WIDTH;
+	public static final int CONTENT_TOP = UiScale.s(20);
 
-	public static final int CONTENT_TOP = UiScale.s(22);
-
-	private final Component title;
-
-	public HeadPresetPickerPanelWidget(int x, int y, int width, int height, Component title) {
-		super(x, y, width, height, title);
-		this.title = title;
+	public StorageMenuHologramSettingsPanelWidget(int x, int y, int height) {
+		super(x, y, PANEL_WIDTH, height, Component.translatable("screen.hologrammenu.storage_menu.hologram_settings_title"));
 		this.active = false;
-	}
-
-	public static int slotSize() {
-		return SLOT_SIZE;
-	}
-
-	public static int panelWidth() {
-		return COLS * SLOT_SIZE + ModPanelLayout.PANEL_PADDING * 2;
-	}
-
-	public static int contentWidth() {
-		return panelWidth() - ModPanelLayout.PANEL_PADDING * 2;
-	}
-
-	public static int gridHeight() {
-		return VISIBLE_ROWS * SLOT_SIZE;
 	}
 
 	@Override
@@ -52,9 +30,9 @@ public final class HeadPresetPickerPanelWidget extends AbstractWidget {
 		UiScaleText.draw(
 			graphics,
 			Minecraft.getInstance().font,
-			title,
+			getMessage(),
 			x + ModPanelLayout.PANEL_PADDING,
-			y + UiScale.s(8),
+			y + UiScale.s(6),
 			0xFFFFFF
 		);
 	}

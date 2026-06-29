@@ -10,7 +10,6 @@ import com.hologrammenu.client.screen.widget.PartSelectEditBox;
 import com.hologrammenu.client.screen.widget.TextStylePanelLayout;
 import com.hologrammenu.client.screen.widget.TextStylePanelWidget;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
-import com.hologrammenu.client.screen.widget.UiScale;
 import com.hologrammenu.npc.NpcHologramStack;
 import com.hologrammenu.text.TextFormats;
 import net.minecraft.client.Minecraft;
@@ -206,7 +205,7 @@ public final class NpcHologramStackOverlay implements NpcStackDragHandle.Listene
 		rowTops = new int[partCount];
 		int left = panelX + TextStylePanelLayout.CONTENT_LEFT;
 		int handleSize = buttonHeight;
-		int styleWidth = UiScale.s(40);
+		int styleWidth = UiLayoutHelper.buttonWidth(Minecraft.getInstance().font, Component.translatable("screen.hologrammenu.hologram_options.style"));
 		int removeWidth = buttonHeight;
 		int gap = layout.buttonRowGap();
 		int contentWidth = TextStylePanelLayout.CONTENT_WIDTH;
@@ -289,19 +288,18 @@ public final class NpcHologramStackOverlay implements NpcStackDragHandle.Listene
 		int gap = layout.buttonRowGap();
 		int addButton = partCount < NpcHologramStack.MAX_ENTRIES ? buttonHeight + gap : 0;
 		int footerY = panelY + layout.partTop() + partCount * layout.partRowHeight() + addButton + ModPanelLayout.SECTION_GAP;
-		int third = ModPanelLayout.columnWidth(contentWidth, 3, gap);
 
 		attach(Button.builder(Component.translatable("screen.hologrammenu.npc_options.add_above"), press -> addRelative(-1))
-			.bounds(left, footerY, third, buttonHeight).build(), true);
+			.bounds(left, footerY, contentWidth, buttonHeight).build(), true);
 		attach(Button.builder(Component.translatable("screen.hologrammenu.npc_options.add_below"), press -> addRelative(1))
-			.bounds(left + third + gap, footerY, third, buttonHeight).build(), true);
+			.bounds(left, footerY + buttonHeight + gap, contentWidth, buttonHeight).build(), true);
 		attach(Button.builder(Component.translatable("gui.done"), press -> close())
-			.bounds(left + (third + gap) * 2, footerY, third, buttonHeight).build(), true);
+			.bounds(left, footerY + (buttonHeight + gap) * 2, contentWidth, buttonHeight).build(), true);
 	}
 
 	private int panelHeight(int partCount, int buttonHeight, TextStylePanelLayout.Metrics layout) {
 		int addButton = partCount < NpcHologramStack.MAX_ENTRIES ? buttonHeight + layout.buttonRowGap() : 0;
-		int footer = ModPanelLayout.SECTION_GAP + buttonHeight + ModPanelLayout.PANEL_PADDING;
+		int footer = ModPanelLayout.SECTION_GAP + ModPanelLayout.stackHeight(3, buttonHeight, layout.buttonRowGap()) + ModPanelLayout.PANEL_PADDING;
 		return layout.partTop() + partCount * layout.partRowHeight() + addButton + footer;
 	}
 

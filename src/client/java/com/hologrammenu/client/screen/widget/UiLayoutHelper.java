@@ -8,7 +8,7 @@ import java.util.List;
 
 public final class UiLayoutHelper {
 	/** Padding in on-screen pixels between widget content and each edge after text scaling. */
-	public static final int VISUAL_PADDING = 1;
+	public static final int VISUAL_PADDING = 4;
 
 	public record ButtonPlacement(int x, int width) {
 	}
@@ -47,6 +47,27 @@ public final class UiLayoutHelper {
 			max = Math.max(max, buttonWidth(font, label));
 		}
 		return max;
+	}
+
+	public static int iconButtonWidth(Font font, Component label) {
+		return buttonWidth(font, label, UiScale.s(20));
+	}
+
+	public static boolean labelFitsButton(Font font, Component label, int buttonWidth) {
+		return buttonWidth(font, label) <= buttonWidth;
+	}
+
+	public static boolean labelsFitEqualRow(int rowWidth, int columns, int gap, Font font, Component... labels) {
+		if (columns <= 0 || labels.length > columns) {
+			return false;
+		}
+		int columnWidth = equalColumnWidth(rowWidth, columns, gap);
+		for (Component label : labels) {
+			if (!labelFitsButton(font, label, columnWidth)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static int centeredRowWidth(Font font, int gap, Component... labels) {

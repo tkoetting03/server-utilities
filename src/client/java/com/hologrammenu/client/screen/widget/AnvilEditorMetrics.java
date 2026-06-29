@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 public final class AnvilEditorMetrics {
 	public static final int PANEL_WIDTH = TextStylePanelLayout.PANEL_WIDTH;
 	public static final int TAB_BUTTON_EXTRA_VERTICAL_PAD = UiScale.s(8);
+	public static final int LORE_PARAGRAPH_COUNTER_CLEARANCE = UiScale.s(6);
 
 	private AnvilEditorMetrics() {
 	}
@@ -31,12 +32,16 @@ public final class AnvilEditorMetrics {
 	}
 
 	public static int stylePanelHeight(int partCount, boolean gradientExpanded) {
-		return TextStylePanelWidget.panelHeight(partCount, tabRowHeight(), gradientExpanded);
+		return stylePanelHeight(partCount, gradientExpanded, false);
+	}
+
+	public static int stylePanelHeight(int partCount, boolean gradientExpanded, boolean partsCollapsed) {
+		return TextStylePanelWidget.panelHeight(partCount, tabRowHeight(), gradientExpanded, partsCollapsed);
 	}
 
 	public static int loreLinesSectionHeight(int lineCount) {
 		return loreParagraphHeight(lineCount)
-			+ ModPanelLayout.ROW_GAP
+			+ loreParagraphBottomGap()
 			+ UiLayoutHelper.defaultButtonHeight()
 			+ ModPanelLayout.ROW_GAP
 			+ UiLayoutHelper.defaultButtonHeight()
@@ -51,12 +56,16 @@ public final class AnvilEditorMetrics {
 		return UiScale.s(10) + lines * UiScale.s(9);
 	}
 
+	public static int loreParagraphBottomGap() {
+		return ModPanelLayout.ROW_GAP + LORE_PARAGRAPH_COUNTER_CLEARANCE;
+	}
+
 	public static int loreFooterTop(int lineCount) {
 		return tabContentTop()
 			+ ModPanelLayout.SECTION_LABEL_GAP
 			+ loreLinesSectionHeight(lineCount)
 			+ ModPanelLayout.SECTION_GAP
-			+ UiLayoutHelper.defaultButtonHeight()
+			+ ModPanelLayout.stackHeight(2, UiLayoutHelper.defaultButtonHeight(), ModPanelLayout.ROW_GAP)
 			+ ModPanelLayout.SECTION_GAP;
 	}
 
@@ -71,7 +80,7 @@ public final class AnvilEditorMetrics {
 		return tabContentTop()
 			+ ModPanelLayout.SECTION_LABEL_GAP
 			+ loreParagraphHeight(lineCount)
-			+ ModPanelLayout.ROW_GAP
+			+ loreParagraphBottomGap()
 			+ loreColorTableHeight(gradientExpanded)
 			+ ModPanelLayout.PANEL_PADDING;
 	}

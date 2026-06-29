@@ -10,6 +10,7 @@ import com.hologrammenu.storage.StorageMenuNavigation;
 import com.hologrammenu.storage.StorageMenuSizes;
 import com.hologrammenu.storage.StorageMenuViewContext;
 import com.hologrammenu.storage.StorageSubMenuManager;
+import com.hologrammenu.text.TextFormats;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,7 +53,7 @@ public final class NpcMenuOpener {
 			public Component getDisplayName() {
 				String customName = NpcHelper.readDisplayName(npc);
 				if (!customName.isBlank()) {
-					return Component.literal(customName);
+					return TextFormats.toComponent(customName);
 				}
 				return definition.displayTitle().orElse(Component.translatable("screen.hologrammenu.npc_options.container_title"));
 			}

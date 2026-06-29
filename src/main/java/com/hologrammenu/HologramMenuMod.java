@@ -1,7 +1,6 @@
 package com.hologrammenu;
 
 import com.hologrammenu.command.ModCommands;
-import com.hologrammenu.head.HeadPresetCatalog;
 import com.hologrammenu.hologram.HologramInteractions;
 import com.hologrammenu.hologram.HologramPlacementHandler;
 import com.hologrammenu.itemstyler.ModMenuTypes;
@@ -34,7 +33,6 @@ public class HologramMenuMod implements ModInitializer {
 		com.hologrammenu.storage.StorageMenuInteractions.register();
 		ModMenuTypes.register();
 		NetworkHandler.registerServer();
-		HeadPresetCatalog.initialize();
 		ModCommands.register();
 		LOGGER.info("Hologram Menu Mod initialized");
 	}

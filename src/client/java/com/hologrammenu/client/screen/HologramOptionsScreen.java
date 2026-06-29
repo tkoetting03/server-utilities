@@ -1,6 +1,7 @@
 package com.hologrammenu.client.screen;
 
 import com.hologrammenu.client.screen.widget.FloatScaleSlider;
+import com.hologrammenu.client.screen.widget.HologramHeightSlider;
 import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScaleText;
@@ -25,6 +26,7 @@ public class HologramOptionsScreen extends Screen {
 	private final List<EditBox> textFields = new ArrayList<>();
 	private TextStyleOverlay styleOverlay;
 	private int activeLineIndex = 0;
+	private float groupHeightOffset;
 
 	public HologramOptionsScreen(int entityId, List<HologramLineStack.Line> lines) {
 		super(Component.translatable("screen.hologrammenu.hologram_options.title"));
@@ -47,9 +49,21 @@ public class HologramOptionsScreen extends Screen {
 		int rowGap = ModPanelLayout.ROW_GAP;
 		int sectionGap = ModPanelLayout.SECTION_GAP;
 		int lineCount = lines.size();
-		int contentHeight = ModPanelLayout.stackHeight(lineCount * 2 + 2, rowHeight, rowGap) + sectionGap + rowHeight;
+		int contentHeight = contentHeight(lineCount, rowHeight, rowGap, sectionGap);
 		int contentTop = ModPanelLayout.centeredContentTop(height, contentHeight);
 		int currentY = contentTop;
+
+		addRenderableWidget(new HologramHeightSlider(
+			fieldX,
+			currentY,
+			contentWidth,
+			Component.translatable("screen.hologrammenu.hologram_options.group_height"),
+			groupHeightOffset,
+			() -> groupHeightOffset,
+			value -> groupHeightOffset = value,
+			() -> {}
+		));
+		currentY += rowHeight + rowGap;
 
 		for (int index = 0; index < lineCount; index++) {
 			int lineIndex = index;
@@ -82,7 +96,21 @@ public class HologramOptionsScreen extends Screen {
 				() -> lines.get(lineIndex).scale(),
 				value -> {
 					HologramLineStack.Line current = lines.get(lineIndex);
-					lines.set(lineIndex, new HologramLineStack.Line(current.text(), value));
+					lines.set(lineIndex, new HologramLineStack.Line(current.text(), value, current.heightOffset()));
+				},
+				() -> {}
+			));
+			currentY += rowHeight + rowGap;
+			addRenderableWidget(new HologramHeightSlider(
+				fieldX,
+				currentY,
+				contentWidth,
+				Component.translatable("screen.hologrammenu.hologram_options.line_height"),
+				line.heightOffset(),
+				() -> lines.get(lineIndex).heightOffset(),
+				value -> {
+					HologramLineStack.Line current = lines.get(lineIndex);
+					lines.set(lineIndex, new HologramLineStack.Line(current.text(), current.scale(), value));
 				},
 				() -> {}
 			));
@@ -105,7 +133,7 @@ public class HologramOptionsScreen extends Screen {
 		field.setValue(TextFormats.parse(line.text()).text());
 		field.setResponder(plain -> {
 			HologramLineStack.Line current = lines.get(index);
-			lines.set(index, new HologramLineStack.Line(TextFormats.parse(current.text()).withText(plain).serialize(), current.scale()));
+			lines.set(index, new HologramLineStack.Line(TextFormats.parse(current.text()).withText(plain).serialize(), current.scale(), current.heightOffset()));
 		});
 		return field;
 	}
@@ -113,7 +141,7 @@ public class HologramOptionsScreen extends Screen {
 	private void openStyleEditor(int index, EditBox field, int fieldX, int contentWidth) {
 		activeLineIndex = index;
 		HologramLineStack.Line current = lines.get(index);
-		lines.set(index, new HologramLineStack.Line(TextFormats.parse(current.text()).withText(field.getValue()).serialize(), current.scale()));
+		lines.set(index, new HologramLineStack.Line(TextFormats.parse(current.text()).withText(field.getValue()).serialize(), current.scale(), current.heightOffset()));
 		int[] position = TextStylePanelPositions.besideField(this, fieldX, contentWidth, field.getY());
 		if (styleOverlay != null) {
 			styleOverlay.dispose();
@@ -123,7 +151,7 @@ public class HologramOptionsScreen extends Screen {
 			field::getValue,
 			TextStyleTarget.editBox(field, serialized -> {
 				HologramLineStack.Line styled = lines.get(index);
-				lines.set(index, new HologramLineStack.Line(serialized, styled.scale()));
+				lines.set(index, new HologramLineStack.Line(serialized, styled.scale(), styled.heightOffset()));
 			}),
 			() -> TextStylePanelPositions.besideField(this, fieldX, contentWidth, field.getY())
 		);
@@ -140,7 +168,7 @@ public class HologramOptionsScreen extends Screen {
 			activeField::getValue,
 			TextStyleTarget.editBox(activeField, serialized -> {
 				HologramLineStack.Line current = lines.get(activeLineIndex);
-				lines.set(activeLineIndex, new HologramLineStack.Line(serialized, current.scale()));
+				lines.set(activeLineIndex, new HologramLineStack.Line(serialized, current.scale(), current.heightOffset()));
 			}),
 			() -> TextStylePanelPositions.besideField(this, fieldX, contentWidth, activeField.getY())
 		);
@@ -151,7 +179,7 @@ public class HologramOptionsScreen extends Screen {
 		if (lines.size() >= HologramLineStack.MAX_LINES) {
 			return;
 		}
-		lines.add(new HologramLineStack.Line("", HologramScale.DEFAULT));
+		lines.add(new HologramLineStack.Line("", HologramScale.DEFAULT, 0.0F));
 		activeLineIndex = lines.size() - 1;
 		if (styleOverlay != null) {
 			styleOverlay.dispose();
@@ -176,6 +204,10 @@ public class HologramOptionsScreen extends Screen {
 		init();
 	}
 
+	private int contentHeight(int lineCount, int rowHeight, int rowGap, int sectionGap) {
+		return ModPanelLayout.stackHeight(lineCount * 3 + 2, rowHeight, rowGap) + sectionGap + rowHeight;
+	}
+
 	private void addActionButtons(int fieldX, int currentY, int contentWidth, int rowHeight, int rowGap) {
 		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
 		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.hologram_options.save"), press -> save())
@@ -193,7 +225,11 @@ public class HologramOptionsScreen extends Screen {
 	private void save() {
 		for (int i = 0; i < textFields.size(); i++) {
 			HologramLineStack.Line current = lines.get(i);
-			lines.set(i, new HologramLineStack.Line(TextFormats.parse(current.text()).withText(textFields.get(i).getValue()).serialize(), current.scale()));
+			lines.set(i, new HologramLineStack.Line(
+				TextFormats.parse(current.text()).withText(textFields.get(i).getValue()).serialize(),
+				current.scale(),
+				current.heightOffset() + groupHeightOffset
+			));
 		}
 		ClientPlayNetworking.send(new ModPackets.HologramEditPayload(entityId, "update", HologramLineStack.serialize(lines)));
 		onClose();
@@ -213,7 +249,7 @@ public class HologramOptionsScreen extends Screen {
 		int rowHeight = UiLayoutHelper.buttonHeight(font);
 		int rowGap = ModPanelLayout.ROW_GAP;
 		int sectionGap = ModPanelLayout.SECTION_GAP;
-		int contentHeight = ModPanelLayout.stackHeight(lines.size() * 2 + 2, rowHeight, rowGap) + sectionGap + rowHeight;
+		int contentHeight = contentHeight(lines.size(), rowHeight, rowGap, sectionGap);
 		int contentTop = ModPanelLayout.centeredContentTop(height, contentHeight);
 
 		UiScaleText.drawCentered(graphics, font, title, width / 2, ModPanelLayout.titleY(contentTop), 0xFFFFFF);

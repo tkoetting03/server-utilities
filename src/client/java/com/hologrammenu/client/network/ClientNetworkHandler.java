@@ -5,7 +5,6 @@ import com.hologrammenu.client.npc.NpcClientConfigStore;
 import com.hologrammenu.client.npc.NpcClientRegistry;
 import com.hologrammenu.client.npc.NpcEditorSessionState;
 import com.hologrammenu.client.screen.EditorMousePreservation;
-import com.hologrammenu.client.head.HeadPresetClientState;
 import com.hologrammenu.client.screen.StorageMenuEditorOverlay;
 import com.hologrammenu.client.storage.ShopClientState;
 import com.hologrammenu.client.storage.StorageMenuClientTracker;
@@ -21,7 +20,7 @@ public final class ClientNetworkHandler {
 
 	public static void register() {
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.HologramTrackPayload.TYPE, (payload, context) -> {
-			Minecraft.getInstance().execute(() -> HologramClientRegistry.track(payload.entityId()));
+			Minecraft.getInstance().execute(() -> HologramClientRegistry.track(payload));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.HologramUntrackPayload.TYPE, (payload, context) -> {
@@ -29,7 +28,7 @@ public final class ClientNetworkHandler {
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.HologramSyncPayload.TYPE, (payload, context) -> {
-			Minecraft.getInstance().execute(() -> HologramClientRegistry.sync(payload.entityIds()));
+			Minecraft.getInstance().execute(() -> HologramClientRegistry.sync(payload.holograms()));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.NpcTrackPayload.TYPE, (payload, context) -> {
@@ -91,10 +90,6 @@ public final class ClientNetworkHandler {
 				}
 				ShopClientState.set(payload.pos(), new com.hologrammenu.storage.ShopDefinition(payload.shopEnabled(), listings));
 			});
-		});
-
-		ClientPlayNetworking.registerGlobalReceiver(ModPackets.HeadPresetListResponsePayload.TYPE, (payload, context) -> {
-			Minecraft.getInstance().execute(() -> HeadPresetClientState.accept(payload));
 		});
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {

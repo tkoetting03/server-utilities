@@ -20,13 +20,18 @@ public final class StorageMenuHologramLabels {
 	}
 
 	public static void sync(ServerLevel level, BlockPos pos, String text, boolean enabled) {
+		sync(level, pos, text, enabled, StorageMenuHologramSettings.DEFAULT);
+	}
+
+	public static void sync(ServerLevel level, BlockPos pos, String text, boolean enabled, StorageMenuHologramSettings settings) {
 		remove(level, pos);
 		if (!enabled || text == null || text.isBlank()) {
 			return;
 		}
 
-		Vec3 position = Vec3.atCenterOf(pos).add(0.0D, LABEL_Y_OFFSET, 0.0D);
-		HologramHelper.createStorageLabel(level, position, TextFormats.toComponent(text.trim()));
+		StorageMenuHologramSettings resolved = settings == null ? StorageMenuHologramSettings.DEFAULT : settings;
+		Vec3 position = Vec3.atCenterOf(pos).add(0.0D, LABEL_Y_OFFSET + resolved.heightOffset(), 0.0D);
+		HologramHelper.createStorageLabel(level, position, TextFormats.toComponent(text.trim()), resolved.scale());
 	}
 
 	public static void remove(ServerLevel level, BlockPos pos) {

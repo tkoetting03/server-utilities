@@ -2,7 +2,7 @@ package com.hologrammenu.client.screen;
 
 import com.hologrammenu.client.screen.widget.AnvilEditorPanelWidget;
 import com.hologrammenu.client.screen.widget.AnvilStyleTabWidget;
-import com.hologrammenu.client.screen.widget.HeadPresetPickerPanelWidget;
+import com.hologrammenu.client.screen.widget.PresetPickerPanelWidget;
 import com.hologrammenu.client.screen.widget.ShopItemPickerGridWidget;
 import com.hologrammenu.client.screen.widget.ShopItemPickerPanelWidget;
 import com.hologrammenu.client.screen.widget.StorageMenuEditorPanelWidget;
@@ -66,7 +66,7 @@ public final class ModUiRenderContext {
 			|| widget instanceof StorageMenuSlotButton
 			|| widget instanceof ShopItemPickerGridWidget
 			|| widget instanceof ShopItemPickerPanelWidget
-			|| widget instanceof HeadPresetPickerPanelWidget
+			|| widget instanceof PresetPickerPanelWidget
 			|| widget instanceof StorageMenuTabWidget
 			|| widget instanceof AnvilStyleTabWidget
 			|| widget instanceof AnvilEditorPanelWidget);

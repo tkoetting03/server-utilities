@@ -11,6 +11,7 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 	private final int partCount;
 	private final int lineCount;
 	private final boolean gradientExpanded;
+	private final boolean partsCollapsed;
 
 	public AnvilEditorPanelWidget(int x, int y, AnvilEditorTab activeTab, int partCount, int lineCount) {
 		this(x, y, activeTab, partCount, lineCount, false);
@@ -29,17 +30,31 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 		boolean gradientExpanded,
 		boolean loreColorTableOpen
 	) {
+		this(x, y, activeTab, partCount, lineCount, gradientExpanded, loreColorTableOpen, false);
+	}
+
+	public AnvilEditorPanelWidget(
+		int x,
+		int y,
+		AnvilEditorTab activeTab,
+		int partCount,
+		int lineCount,
+		boolean gradientExpanded,
+		boolean loreColorTableOpen,
+		boolean partsCollapsed
+	) {
 		super(
 			x,
 			y,
 			AnvilEditorMetrics.PANEL_WIDTH,
-			panelHeight(activeTab, partCount, lineCount, gradientExpanded, loreColorTableOpen),
+			panelHeight(activeTab, partCount, lineCount, gradientExpanded, loreColorTableOpen, partsCollapsed),
 			panelTitle(activeTab)
 		);
 		this.activeTab = activeTab;
 		this.partCount = Math.max(1, partCount);
 		this.lineCount = Math.max(1, lineCount);
 		this.gradientExpanded = gradientExpanded;
+		this.partsCollapsed = partsCollapsed;
 		this.active = false;
 	}
 
@@ -58,8 +73,19 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 		boolean gradientExpanded,
 		boolean loreColorTableOpen
 	) {
+		return panelHeight(activeTab, partCount, lineCount, gradientExpanded, loreColorTableOpen, false);
+	}
+
+	public static int panelHeight(
+		AnvilEditorTab activeTab,
+		int partCount,
+		int lineCount,
+		boolean gradientExpanded,
+		boolean loreColorTableOpen,
+		boolean partsCollapsed
+	) {
 		return switch (activeTab) {
-			case STYLE -> AnvilEditorMetrics.stylePanelHeight(partCount, gradientExpanded);
+			case STYLE -> AnvilEditorMetrics.stylePanelHeight(partCount, gradientExpanded, partsCollapsed);
 			case LORE -> AnvilEditorMetrics.lorePanelHeight(lineCount, loreColorTableOpen, gradientExpanded);
 		};
 	}
@@ -90,7 +116,8 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 			TextStylePanelLayout.Metrics layout = TextStylePanelLayout.metrics(
 				partCount,
 				AnvilEditorMetrics.tabRowHeight(),
-				gradientExpanded
+				gradientExpanded,
+				partsCollapsed
 			);
 			UiSectionSeparator.draw(
 				graphics,

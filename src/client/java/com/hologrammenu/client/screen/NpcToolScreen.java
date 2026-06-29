@@ -5,7 +5,6 @@ import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScaleText;
 import com.hologrammenu.client.storage.StorageMenuClientPermissions;
-import com.hologrammenu.head.HeadPresetIds;
 import com.hologrammenu.network.ModPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -25,8 +24,6 @@ public final class NpcToolScreen extends Screen {
 	private EditBox nameField;
 	private Button typeButton;
 	private Button professionButton;
-	private Button headPresetsButton;
-	private HeadPresetPickerOverlay headPresetPickerOverlay;
 
 	public NpcToolScreen(Screen parent, Vec3 placementPosition) {
 		super(Component.translatable("screen.hologrammenu.npc_tool.title"));
@@ -36,17 +33,12 @@ public final class NpcToolScreen extends Screen {
 
 	@Override
 	protected void init() {
-		boolean restorePicker = headPresetPickerOverlay != null && headPresetPickerOverlay.isOpen();
-		if (headPresetPickerOverlay != null && restorePicker) {
-			headPresetPickerOverlay.close();
-		}
-
 		int contentWidth = ModPanelLayout.screenContentWidth(this.width);
 		int fieldX = ModPanelLayout.centeredX(this.width, contentWidth);
 		int rowHeight = UiLayoutHelper.buttonHeight(this.font);
 		int rowGap = ModPanelLayout.ROW_GAP;
 		int sectionGap = ModPanelLayout.SECTION_GAP;
-		int contentHeight = ModPanelLayout.stackHeight(5, rowHeight, rowGap) + sectionGap + rowHeight;
+		int contentHeight = ModPanelLayout.stackHeight(4, rowHeight, rowGap) + sectionGap + rowHeight;
 		int contentTop = ModPanelLayout.centeredContentTop(this.height, contentHeight);
 		int y = contentTop;
 
@@ -75,11 +67,6 @@ public final class NpcToolScreen extends Screen {
 		addRenderableWidget(skinField);
 		y += rowHeight + rowGap;
 
-		headPresetsButton = Button.builder(Component.translatable("screen.hologrammenu.head_presets.button"), press -> toggleHeadPresets())
-			.bounds(fieldX, y, contentWidth, rowHeight).build();
-		addRenderableWidget(headPresetsButton);
-		y += rowHeight + rowGap;
-
 		nameField = new EditBox(this.font, fieldX, y, contentWidth, rowHeight, Component.translatable("screen.hologrammenu.npc_tool.display_name"));
 		nameField.setMaxLength(64);
 		nameField.setValue(ClientSettings.npcDisplayName);
@@ -94,41 +81,7 @@ public final class NpcToolScreen extends Screen {
 		addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), press -> onCancel())
 			.bounds(fieldX + half + rowGap, y, half, rowHeight).build());
 
-		ensureHeadPresetPickerOverlay();
-		if (restorePicker) {
-			headPresetPickerOverlay.open();
-		}
 		updateFieldVisibility();
-	}
-
-	private void toggleHeadPresets() {
-		ensureHeadPresetPickerOverlay();
-		headPresetPickerOverlay.toggle();
-	}
-
-	private void ensureHeadPresetPickerOverlay() {
-		if (headPresetPickerOverlay != null) {
-			return;
-		}
-		headPresetPickerOverlay = new HeadPresetPickerOverlay(
-			this,
-			entry -> {
-				ClientSettings.npcSkinName = HeadPresetIds.encode(entry.id());
-				if (skinField != null) {
-					skinField.setValue(ClientSettings.npcSkinName);
-				}
-			},
-			this::headPresetPanelPosition
-		);
-	}
-
-	private int[] headPresetPanelPosition() {
-		int contentWidth = ModPanelLayout.screenContentWidth(this.width);
-		int fieldX = ModPanelLayout.centeredX(this.width, contentWidth);
-		int anchorY = headPresetsButton != null
-			? headPresetsButton.getY()
-			: skinField != null ? skinField.getY() : 0;
-		return TextStylePanelPositions.besideField(this, fieldX, contentWidth, anchorY);
 	}
 
 	private void placeNpc() {
@@ -161,8 +114,6 @@ public final class NpcToolScreen extends Screen {
 		boolean player = ClientSettings.npcKind == ClientSettings.NpcKind.PLAYER;
 		skinField.visible = player;
 		skinField.active = player;
-		headPresetsButton.visible = player;
-		headPresetsButton.active = player;
 		professionButton.visible = !player;
 		professionButton.active = !player;
 	}
@@ -185,9 +136,6 @@ public final class NpcToolScreen extends Screen {
 	}
 
 	private void onCancel() {
-		if (headPresetPickerOverlay != null) {
-			headPresetPickerOverlay.close();
-		}
 		if (this.minecraft != null) {
 			this.minecraft.setScreen(parent);
 		}
@@ -199,20 +147,12 @@ public final class NpcToolScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-		if (headPresetPickerOverlay != null && headPresetPickerOverlay.isOpen() && headPresetPickerOverlay.mouseScrolled(scrollY)) {
-			return true;
-		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
-	}
-
-	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		int rowHeight = UiLayoutHelper.buttonHeight(this.font);
 		int rowGap = ModPanelLayout.ROW_GAP;
 		int sectionGap = ModPanelLayout.SECTION_GAP;
-		int contentHeight = ModPanelLayout.stackHeight(5, rowHeight, rowGap) + sectionGap + rowHeight;
+		int contentHeight = ModPanelLayout.stackHeight(4, rowHeight, rowGap) + sectionGap + rowHeight;
 		int contentTop = ModPanelLayout.centeredContentTop(this.height, contentHeight);
 		UiScaleText.drawCentered(graphics, this.font, this.title, this.width / 2, ModPanelLayout.titleY(contentTop), 0xFFFFFF);
 		UiScaleText.drawCentered(

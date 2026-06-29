@@ -14,8 +14,10 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class ParticlePresetGridWidget extends AbstractWidget {
-	private static final int SLOT_SIZE = HeadPresetPickerPanelWidget.slotSize();
-	private static final int COLS = HeadPresetPickerPanelWidget.COLS;
+	private static final int SLOT_SIZE = PresetPickerPanelWidget.slotSize();
+	private static final int CELL_WIDTH = PresetPickerPanelWidget.cellWidth();
+	private static final int CELL_HEIGHT = PresetPickerPanelWidget.cellHeight();
+	private static final int COLS = PresetPickerPanelWidget.COLS;
 
 	private final Supplier<List<ParticlePresetEntry>> visibleEntries;
 	private final IntSupplier scrollRow;
@@ -44,7 +46,7 @@ public final class ParticlePresetGridWidget extends AbstractWidget {
 		List<ParticlePresetEntry> entries = visibleEntries.get();
 		int startRow = scrollRow.getAsInt();
 		int selected = selectedIndex.getAsInt();
-		int visibleRows = height / SLOT_SIZE;
+		int visibleRows = height / CELL_HEIGHT;
 		var font = Minecraft.getInstance().font;
 
 		for (int row = 0; row < visibleRows; row++) {
@@ -54,17 +56,19 @@ public final class ParticlePresetGridWidget extends AbstractWidget {
 					continue;
 				}
 				ParticlePresetEntry entry = entries.get(index);
-				int slotX = getX() + col * SLOT_SIZE;
-				int slotY = getY() + row * SLOT_SIZE;
+				int cellX = getX() + col * CELL_WIDTH;
+				int cellY = getY() + row * CELL_HEIGHT;
+				int slotX = cellX + (CELL_WIDTH - SLOT_SIZE) / 2;
+				int slotY = cellY + UiScale.s(2);
 				boolean isSelected = index == selected;
-				boolean hovered = mouseX >= slotX && mouseX < slotX + SLOT_SIZE && mouseY >= slotY && mouseY < slotY + SLOT_SIZE;
+				boolean hovered = mouseX >= cellX && mouseX < cellX + CELL_WIDTH && mouseY >= cellY && mouseY < cellY + CELL_HEIGHT;
 				int background = isSelected ? 0xFF3D7A3D : hovered ? 0xFF6A6A6A : 0xFF8B8B8B;
-				graphics.fill(slotX, slotY, slotX + SLOT_SIZE, slotY + SLOT_SIZE, background);
+				graphics.fill(cellX, cellY, cellX + CELL_WIDTH, cellY + CELL_HEIGHT, background);
 				if (isSelected) {
-					graphics.fill(slotX, slotY, slotX + SLOT_SIZE, slotY + 1, 0xFF9FFF9F);
-					graphics.fill(slotX, slotY + SLOT_SIZE - 1, slotX + SLOT_SIZE, slotY + SLOT_SIZE, 0xFF2A5A2A);
-					graphics.fill(slotX, slotY, slotX + 1, slotY + SLOT_SIZE, 0xFF9FFF9F);
-					graphics.fill(slotX + SLOT_SIZE - 1, slotY, slotX + SLOT_SIZE, slotY + SLOT_SIZE, 0xFF2A5A2A);
+					graphics.fill(cellX, cellY, cellX + CELL_WIDTH, cellY + 1, 0xFF9FFF9F);
+					graphics.fill(cellX, cellY + CELL_HEIGHT - 1, cellX + CELL_WIDTH, cellY + CELL_HEIGHT, 0xFF2A5A2A);
+					graphics.fill(cellX, cellY, cellX + 1, cellY + CELL_HEIGHT, 0xFF9FFF9F);
+					graphics.fill(cellX + CELL_WIDTH - 1, cellY, cellX + CELL_WIDTH, cellY + CELL_HEIGHT, 0xFF2A5A2A);
 				}
 				int swatchSize = SLOT_SIZE - 8;
 				int swatchX = slotX + 4;
@@ -73,10 +77,13 @@ public final class ParticlePresetGridWidget extends AbstractWidget {
 				graphics.fill(swatchX, swatchY, swatchX + swatchSize, swatchY + 1, 0xFF2A2A2A);
 				graphics.fill(swatchX, swatchY + swatchSize - 1, swatchX + swatchSize, swatchY + swatchSize, 0xFF1A1A1A);
 				String label = entry.name();
-				if (font.width(label) > SLOT_SIZE - 4) {
-					label = font.plainSubstrByWidth(label, SLOT_SIZE - 8) + "...";
+				int labelWidth = Math.round((CELL_WIDTH - UiScale.s(6)) / UiScale.TEXT_SCALE);
+				if (font.width(label) > labelWidth) {
+					label = font.plainSubstrByWidth(label, labelWidth - font.width("...")) + "...";
 				}
-				UiScaleText.drawCentered(graphics, font, Component.literal(label), slotX + SLOT_SIZE / 2, slotY + SLOT_SIZE - font.lineHeight - 2, 0xFFFFFF);
+				int labelY = cellY + CELL_HEIGHT - UiScaleText.lineHeight(font) - UiScale.s(2);
+				graphics.fill(cellX + 1, labelY - UiScale.s(1), cellX + CELL_WIDTH - 1, cellY + CELL_HEIGHT - 1, 0xA0000000);
+				UiScaleText.drawCentered(graphics, font, Component.literal(label), cellX + CELL_WIDTH / 2, labelY, 0xFFFFFF);
 			}
 		}
 	}
@@ -92,8 +99,8 @@ public final class ParticlePresetGridWidget extends AbstractWidget {
 		if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
 			return;
 		}
-		int col = localX / SLOT_SIZE;
-		int row = localY / SLOT_SIZE;
+		int col = localX / CELL_WIDTH;
+		int row = localY / CELL_HEIGHT;
 		if (col < 0 || col >= COLS) {
 			return;
 		}

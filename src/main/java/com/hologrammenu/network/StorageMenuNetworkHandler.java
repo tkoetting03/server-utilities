@@ -141,19 +141,21 @@ public final class StorageMenuNetworkHandler {
 		StorageMenuDefinition definition;
 		boolean invulnerable = false;
 		boolean hologramLabel = false;
+		com.hologrammenu.storage.StorageMenuHologramSettings hologramSettings = com.hologrammenu.storage.StorageMenuHologramSettings.DEFAULT;
 		ShopDefinition shop = ShopDefinition.EMPTY;
 		if (viewContext.isRoot()) {
 			Optional<StorageMenuBlockData> blockData = StorageMenuBlockStore.get(level, pos);
 			definition = blockData.map(StorageMenuBlockData::definition).orElse(StorageMenuDefinition.empty(containerSize));
 			invulnerable = blockData.map(StorageMenuBlockData::invulnerable).orElse(false);
 			hologramLabel = blockData.map(StorageMenuBlockData::hologramLabel).orElse(false);
+			hologramSettings = blockData.map(StorageMenuBlockData::hologramSettings).orElse(com.hologrammenu.storage.StorageMenuHologramSettings.DEFAULT);
 			shop = blockData.map(StorageMenuBlockData::shop).orElse(ShopDefinition.EMPTY);
 		} else {
 			definition = StorageSubMenuManager.get(level, viewContext.subMenuId())
 				.orElse(StorageMenuDefinition.empty(containerSize));
 		}
 
-		StorageMenuNetwork.MenuData data = StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, invulnerable, hologramLabel, shop);
+		StorageMenuNetwork.MenuData data = StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, invulnerable, hologramLabel, hologramSettings, shop);
 		ServerPlayNetworking.send(player, new ModPackets.StorageMenuSyncPayload(data));
 	}
 
@@ -182,8 +184,8 @@ public final class StorageMenuNetworkHandler {
 		StorageMenuDefinition definition = StorageMenuChrome.stripRuntimeChrome(menuData.toDefinition()).withEnabled(true);
 		if (viewContext.isRoot()) {
 			definition = ensureLinkSubMenus(level, definition, menuData.containerSize());
-			StorageMenuManager.save(level, pos, definition, menuData.invulnerable(), menuData.hologramLabel(), menuData.toShopDefinition());
-			com.hologrammenu.storage.StorageMenuHologramLabels.sync(level, pos, definition.title(), menuData.hologramLabel());
+			StorageMenuManager.save(level, pos, definition, menuData.invulnerable(), menuData.hologramLabel(), menuData.hologramSettings(), menuData.toShopDefinition());
+			com.hologrammenu.storage.StorageMenuHologramLabels.sync(level, pos, definition.title(), menuData.hologramLabel(), menuData.hologramSettings());
 			com.hologrammenu.storage.StorageMenuLiveRefresh.refreshViewers(level, pos, definition);
 		} else {
 			definition = ensureLinkSubMenus(level, definition, menuData.containerSize());
@@ -194,7 +196,7 @@ public final class StorageMenuNetworkHandler {
 			? StorageMenuManager.getShop(level, pos).orElse(ShopDefinition.EMPTY)
 			: ShopDefinition.EMPTY;
 		ServerPlayNetworking.send(player, new ModPackets.StorageMenuSyncPayload(
-			StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, menuData.invulnerable(), menuData.hologramLabel(), savedShop)
+			StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, menuData.invulnerable(), menuData.hologramLabel(), menuData.hologramSettings(), savedShop)
 		));
 		sendShopState(player, pos, savedShop);
 	}

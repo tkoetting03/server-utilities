@@ -4,7 +4,7 @@ package com.hologrammenu.client.screen.widget;
  * Shared layout constants and helpers for mod GUI panels and centered screens.
  */
 public final class ModPanelLayout {
-	public static final int PANEL_WIDTH = UiScale.s(200);
+	public static final int PANEL_WIDTH = UiScale.s(260);
 	public static final int PANEL_PADDING = UiScale.s(6);
 	public static final int CONTENT_WIDTH = PANEL_WIDTH - PANEL_PADDING * 2;
 	public static final int TITLE_BAR_HEIGHT = UiScale.s(14);
@@ -20,14 +20,14 @@ public final class ModPanelLayout {
 	public static final int ROW_HEIGHT = UiLayoutHelper.defaultButtonHeight();
 
 	public static final int SCREEN_MARGIN = UiScale.s(24);
-	public static final int SCREEN_CONTENT_MAX = UiScale.s(240);
+	public static final int SCREEN_CONTENT_MAX = UiScale.s(320);
 	public static final int TITLE_BLOCK_HEIGHT = UiScale.s(22);
 
 	private ModPanelLayout() {
 	}
 
 	public static int screenContentWidth(int screenWidth) {
-		return Math.min(SCREEN_CONTENT_MAX, Math.max(UiScale.s(120), screenWidth - SCREEN_MARGIN));
+		return Math.min(SCREEN_CONTENT_MAX, Math.max(UiScale.s(160), screenWidth - SCREEN_MARGIN));
 	}
 
 	public static int centeredX(int screenWidth, int width) {

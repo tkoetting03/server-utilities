@@ -5,7 +5,6 @@ import com.hologrammenu.client.screen.ModUiRenderContext;
 import com.hologrammenu.client.screen.ModUiSelectionState;
 import com.hologrammenu.client.screen.StorageMenuEditorOverlay;
 import com.hologrammenu.client.screen.StorageMenuNameOverlay;
-import com.hologrammenu.client.screen.HeadPresetPickerOverlay;
 import com.hologrammenu.client.screen.ItemStylerOverlay;
 import com.hologrammenu.client.screen.ParticlePresetPickerOverlay;
 import com.hologrammenu.client.screen.NpcHologramStackOverlay;
@@ -26,7 +25,6 @@ public abstract class ScreenMixin {
 		ModUiSelectionState.clearScreen(screen);
 		TextStyleOverlay.onScreenRemoved(screen);
 		NpcHologramStackOverlay.onScreenRemoved(screen);
-		HeadPresetPickerOverlay.onScreenRemoved(screen);
 		ParticlePresetPickerOverlay.onScreenRemoved(screen);
 		ItemStylerOverlay.onScreenRemoved(screen);
 		StorageMenuNameOverlay.onScreenRemoved(screen);

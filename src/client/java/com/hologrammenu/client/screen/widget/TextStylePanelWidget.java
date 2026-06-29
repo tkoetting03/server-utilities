@@ -14,6 +14,7 @@ public class TextStylePanelWidget extends AbstractWidget {
 	private final int partCount;
 	private final int contentTopOffset;
 	private final boolean gradientExpanded;
+	private final boolean partsCollapsed;
 
 	public TextStylePanelWidget(int x, int y, int partCount) {
 		this(x, y, partCount, 0, false);
@@ -24,16 +25,28 @@ public class TextStylePanelWidget extends AbstractWidget {
 	}
 
 	public TextStylePanelWidget(int x, int y, int partCount, int contentTopOffset, boolean gradientExpanded) {
+		this(x, y, partCount, contentTopOffset, gradientExpanded, false);
+	}
+
+	public TextStylePanelWidget(
+		int x,
+		int y,
+		int partCount,
+		int contentTopOffset,
+		boolean gradientExpanded,
+		boolean partsCollapsed
+	) {
 		super(
 			x,
 			y,
 			PANEL_WIDTH,
-			panelHeight(partCount, contentTopOffset, gradientExpanded),
+			panelHeight(partCount, contentTopOffset, gradientExpanded, partsCollapsed),
 			Component.translatable("screen.hologrammenu.text_style.title")
 		);
 		this.partCount = Math.max(1, partCount);
 		this.contentTopOffset = contentTopOffset;
 		this.gradientExpanded = gradientExpanded;
+		this.partsCollapsed = partsCollapsed;
 		this.active = false;
 	}
 
@@ -50,7 +63,11 @@ public class TextStylePanelWidget extends AbstractWidget {
 	}
 
 	public static int panelHeight(int partCount, int contentTopOffset, boolean gradientExpanded) {
-		return TextStylePanelLayout.metrics(partCount, contentTopOffset, gradientExpanded).panelHeight(partCount);
+		return panelHeight(partCount, contentTopOffset, gradientExpanded, false);
+	}
+
+	public static int panelHeight(int partCount, int contentTopOffset, boolean gradientExpanded, boolean partsCollapsed) {
+		return TextStylePanelLayout.metrics(partCount, contentTopOffset, gradientExpanded, partsCollapsed).panelHeight(partCount);
 	}
 
 	@Override
@@ -59,7 +76,12 @@ public class TextStylePanelWidget extends AbstractWidget {
 		int y = getY();
 		int right = x + width;
 		int bottom = y + height;
-		TextStylePanelLayout.Metrics layout = TextStylePanelLayout.metrics(partCount, contentTopOffset, gradientExpanded);
+		TextStylePanelLayout.Metrics layout = TextStylePanelLayout.metrics(
+			partCount,
+			contentTopOffset,
+			gradientExpanded,
+			partsCollapsed
+		);
 
 		graphics.fill(x, y, right, bottom, 0xF0181818);
 		graphics.fill(x, y, right, y + 1, 0xFF6A6A6A);

@@ -32,11 +32,35 @@ public final class StorageMenuManager {
 
 	public static void save(ServerLevel level, BlockPos pos, StorageMenuDefinition definition, boolean invulnerable, boolean hologramLabel) {
 		ShopDefinition shop = StorageMenuBlockStore.get(level, pos).map(StorageMenuBlockData::shop).orElse(ShopDefinition.EMPTY);
-		StorageMenuBlockStore.set(level, pos, new StorageMenuBlockData(definition, invulnerable, hologramLabel, shop));
+		StorageMenuHologramSettings hologramSettings = StorageMenuBlockStore.get(level, pos)
+			.map(StorageMenuBlockData::hologramSettings)
+			.orElse(StorageMenuHologramSettings.DEFAULT);
+		StorageMenuBlockStore.set(level, pos, new StorageMenuBlockData(definition, invulnerable, hologramLabel, hologramSettings, shop));
 	}
 
 	public static void save(ServerLevel level, BlockPos pos, StorageMenuDefinition definition, boolean invulnerable, boolean hologramLabel, ShopDefinition shop) {
-		StorageMenuBlockStore.set(level, pos, new StorageMenuBlockData(definition, invulnerable, hologramLabel, shop == null ? ShopDefinition.EMPTY : shop));
+		StorageMenuHologramSettings hologramSettings = StorageMenuBlockStore.get(level, pos)
+			.map(StorageMenuBlockData::hologramSettings)
+			.orElse(StorageMenuHologramSettings.DEFAULT);
+		save(level, pos, definition, invulnerable, hologramLabel, hologramSettings, shop);
+	}
+
+	public static void save(
+		ServerLevel level,
+		BlockPos pos,
+		StorageMenuDefinition definition,
+		boolean invulnerable,
+		boolean hologramLabel,
+		StorageMenuHologramSettings hologramSettings,
+		ShopDefinition shop
+	) {
+		StorageMenuBlockStore.set(level, pos, new StorageMenuBlockData(
+			definition,
+			invulnerable,
+			hologramLabel,
+			hologramSettings == null ? StorageMenuHologramSettings.DEFAULT : hologramSettings,
+			shop == null ? ShopDefinition.EMPTY : shop
+		));
 	}
 
 	public static void saveShop(ServerLevel level, BlockPos pos, ShopDefinition shop) {

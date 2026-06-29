@@ -71,12 +71,16 @@ public final class ModPackets {
 		}
 	}
 
-	public record HologramTrackPayload(int entityId) implements CustomPacketPayload {
+	public record HologramTrackPayload(int entityId, String groupId, int lineIndex) implements CustomPacketPayload {
 		public static final CustomPacketPayload.Type<HologramTrackPayload> TYPE =
 			new CustomPacketPayload.Type<>(HologramMenuMod.id("hologram_track"));
 		public static final StreamCodec<RegistryFriendlyByteBuf, HologramTrackPayload> CODEC = StreamCodec.composite(
 			ByteBufCodecs.VAR_INT,
 			HologramTrackPayload::entityId,
+			ByteBufCodecs.STRING_UTF8,
+			HologramTrackPayload::groupId,
+			ByteBufCodecs.VAR_INT,
+			HologramTrackPayload::lineIndex,
 			HologramTrackPayload::new
 		);
 
@@ -101,12 +105,12 @@ public final class ModPackets {
 		}
 	}
 
-	public record HologramSyncPayload(java.util.List<Integer> entityIds) implements CustomPacketPayload {
+	public record HologramSyncPayload(java.util.List<HologramTrackPayload> holograms) implements CustomPacketPayload {
 		public static final CustomPacketPayload.Type<HologramSyncPayload> TYPE =
 			new CustomPacketPayload.Type<>(HologramMenuMod.id("hologram_sync"));
 		public static final StreamCodec<RegistryFriendlyByteBuf, HologramSyncPayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.collection(java.util.ArrayList::new, ByteBufCodecs.VAR_INT),
-			HologramSyncPayload::entityIds,
+			ByteBufCodecs.collection(java.util.ArrayList::new, HologramTrackPayload.CODEC),
+			HologramSyncPayload::holograms,
 			HologramSyncPayload::new
 		);
 
@@ -434,13 +438,13 @@ public final class ModPackets {
 					buffer.readVarInt(),
 					buffer.readUtf(),
 					buffer.readUtf(),
-					buffer.readUtf(),
-					buffer.readUtf(),
-					buffer.readUtf(),
-					buffer.readBoolean(),
-					buffer.readFloat(),
-					buffer.readBoolean(),
-					buffer.readVarInt(),
+						buffer.readUtf(),
+						buffer.readUtf(),
+						buffer.readUtf(),
+						buffer.readBoolean(),
+						buffer.readFloat(),
+						buffer.readBoolean(),
+						buffer.readVarInt(),
 					buffer.readUtf(),
 					buffer.readBoolean(),
 					buffer.readUtf()
@@ -504,91 +508,6 @@ public final class ModPackets {
 			ByteBufCodecs.STRING_UTF8,
 			ItemStylerApplyNamePayload::styledName,
 			ItemStylerApplyNamePayload::new
-		);
-
-		@Override
-		public Type<? extends CustomPacketPayload> type() {
-			return TYPE;
-		}
-	}
-
-	public record GivePlayerHeadPayload(String profileName, String headDatabaseId, String headDatabaseBase64) implements CustomPacketPayload {
-		public static final CustomPacketPayload.Type<GivePlayerHeadPayload> TYPE =
-			new CustomPacketPayload.Type<>(HologramMenuMod.id("give_player_head"));
-		public static final StreamCodec<RegistryFriendlyByteBuf, GivePlayerHeadPayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.STRING_UTF8,
-			GivePlayerHeadPayload::profileName,
-			ByteBufCodecs.STRING_UTF8,
-			GivePlayerHeadPayload::headDatabaseId,
-			ByteBufCodecs.STRING_UTF8,
-			GivePlayerHeadPayload::headDatabaseBase64,
-			GivePlayerHeadPayload::new
-		);
-
-		@Override
-		public Type<? extends CustomPacketPayload> type() {
-			return TYPE;
-		}
-	}
-
-	public record HeadPresetListRequestPayload(String category, String query, int page) implements CustomPacketPayload {
-		public static final CustomPacketPayload.Type<HeadPresetListRequestPayload> TYPE =
-			new CustomPacketPayload.Type<>(HologramMenuMod.id("head_preset_list_request"));
-		public static final StreamCodec<RegistryFriendlyByteBuf, HeadPresetListRequestPayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.STRING_UTF8,
-			HeadPresetListRequestPayload::category,
-			ByteBufCodecs.STRING_UTF8,
-			HeadPresetListRequestPayload::query,
-			ByteBufCodecs.VAR_INT,
-			HeadPresetListRequestPayload::page,
-			HeadPresetListRequestPayload::new
-		);
-
-		@Override
-		public Type<? extends CustomPacketPayload> type() {
-			return TYPE;
-		}
-	}
-
-	public record HeadPresetListResponsePayload(
-		boolean available,
-		String message,
-		String category,
-		String query,
-		int page,
-		int totalCount,
-		java.util.List<com.hologrammenu.head.HeadPresetEntry> entries
-	) implements CustomPacketPayload {
-		public static final CustomPacketPayload.Type<HeadPresetListResponsePayload> TYPE =
-			new CustomPacketPayload.Type<>(HologramMenuMod.id("head_preset_list_response"));
-		private static final StreamCodec<RegistryFriendlyByteBuf, com.hologrammenu.head.HeadPresetEntry> ENTRY_CODEC =
-			StreamCodec.composite(
-				ByteBufCodecs.STRING_UTF8,
-				com.hologrammenu.head.HeadPresetEntry::id,
-				ByteBufCodecs.STRING_UTF8,
-				com.hologrammenu.head.HeadPresetEntry::name,
-				ByteBufCodecs.STRING_UTF8,
-				com.hologrammenu.head.HeadPresetEntry::category,
-				ByteBufCodecs.STRING_UTF8,
-				com.hologrammenu.head.HeadPresetEntry::base64,
-				com.hologrammenu.head.HeadPresetEntry::new
-			);
-		public static final StreamCodec<RegistryFriendlyByteBuf, HeadPresetListResponsePayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.BOOL,
-			HeadPresetListResponsePayload::available,
-			ByteBufCodecs.STRING_UTF8,
-			HeadPresetListResponsePayload::message,
-			ByteBufCodecs.STRING_UTF8,
-			HeadPresetListResponsePayload::category,
-			ByteBufCodecs.STRING_UTF8,
-			HeadPresetListResponsePayload::query,
-			ByteBufCodecs.VAR_INT,
-			HeadPresetListResponsePayload::page,
-			ByteBufCodecs.VAR_INT,
-			HeadPresetListResponsePayload::totalCount,
-			ENTRY_CODEC.apply(ByteBufCodecs.list()),
-			HeadPresetListResponsePayload::entries,
-			HeadPresetListResponsePayload::new
 		);
 
 		@Override

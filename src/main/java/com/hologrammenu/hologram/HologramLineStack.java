@@ -17,14 +17,22 @@ public final class HologramLineStack {
 	public static final int MAX_LINES = 10;
 	public static final String GROUP_TAG_PREFIX = "hologrammenu:hologram_group:";
 	public static final String LINE_INDEX_TAG_PREFIX = "hologrammenu:hologram_line:";
+	public static final float MIN_HEIGHT_OFFSET = -2.0F;
+	public static final float MAX_HEIGHT_OFFSET = 2.0F;
+	public static final double LINE_SPACING = 0.28D;
 
 	private static final Gson GSON = new Gson();
 	private static final Type LINE_LIST_TYPE = new TypeToken<List<Line>>() {}.getType();
 
-	public record Line(String text, float scale) {
+	public record Line(String text, float scale, float heightOffset) {
 		public Line {
 			text = TextFormats.normalize(text == null ? "" : text);
 			scale = HologramScale.clamp(scale);
+			heightOffset = clampHeightOffset(heightOffset);
+		}
+
+		public Line(String text, float scale) {
+			this(text, scale, 0.0F);
 		}
 	}
 
@@ -67,12 +75,24 @@ public final class HologramLineStack {
 	}
 
 	public static List<Line> readGroup(List<Display.TextDisplay> displays) {
-		return displays.stream()
+		List<Display.TextDisplay> sorted = displays.stream()
 			.sorted(Comparator.comparingInt(HologramLineStack::lineIndex))
-			.map(display -> new Line(
+			.toList();
+		if (sorted.isEmpty()) {
+			return List.of();
+		}
+		double anchorY = sorted.getLast().getY();
+		int lineCount = sorted.size();
+		return sorted.stream()
+			.map(display -> {
+				int index = Math.max(0, Math.min(lineCount - 1, lineIndex(display)));
+				double expectedY = anchorY + (lineCount - 1 - index) * LINE_SPACING;
+				return new Line(
 				TextFormats.fromComponent(((TextDisplayAccessor) display).hologrammenu$getText()),
-				HologramScale.getScale(display)
-			))
+					HologramScale.getScale(display),
+					(float) (display.getY() - expectedY)
+				);
+			})
 			.toList();
 	}
 
@@ -117,11 +137,22 @@ public final class HologramLineStack {
 			if (normalized.size() >= MAX_LINES) {
 				break;
 			}
-			normalized.add(new Line(line == null ? "" : line.text(), line == null ? HologramScale.DEFAULT : line.scale()));
+			normalized.add(new Line(
+				line == null ? "" : line.text(),
+				line == null ? HologramScale.DEFAULT : line.scale(),
+				line == null ? 0.0F : line.heightOffset()
+			));
 		}
 		if (normalized.isEmpty()) {
 			normalized.add(new Line("", HologramScale.DEFAULT));
 		}
 		return normalized;
+	}
+
+	public static float clampHeightOffset(float offset) {
+		if (Float.isNaN(offset)) {
+			return 0.0F;
+		}
+		return Math.max(MIN_HEIGHT_OFFSET, Math.min(MAX_HEIGHT_OFFSET, offset));
 	}
 }

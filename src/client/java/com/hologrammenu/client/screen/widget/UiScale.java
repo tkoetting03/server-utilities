@@ -12,8 +12,8 @@ public final class UiScale {
 	public static final int NUMBER_BOX_BASE = 14;
 	/** Shop picker grid slot size, 25% smaller than the previous 18px base. */
 	public static final int PICKER_SLOT_BASE = 14;
-	/** Head preset picker grid slot size — larger than the shop picker for easier browsing. */
-	public static final int HEAD_PRESET_SLOT_BASE = 32;
+	/** Preset picker grid slot size — larger than the shop picker for easier browsing. */
+	public static final int PRESET_PICKER_SLOT_BASE = 32;
 
 	private UiScale() {
 	}

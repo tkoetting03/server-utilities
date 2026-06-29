@@ -82,6 +82,7 @@ public final class StorageMenuNetwork {
 		List<SlotData> slots,
 		boolean invulnerable,
 		boolean hologramLabel,
+		StorageMenuHologramSettings hologramSettings,
 		boolean shopEnabled,
 		List<ShopListingData> shopListings,
 		int npcEntityId
@@ -103,6 +104,8 @@ public final class StorageMenuNetwork {
 			MenuData::invulnerable,
 			ByteBufCodecs.BOOL,
 			MenuData::hologramLabel,
+			StorageMenuHologramSettings.STREAM_CODEC,
+			MenuData::hologramSettings,
 			ByteBufCodecs.BOOL,
 			MenuData::shopEnabled,
 			ShopListingData.STREAM_CODEC.apply(ByteBufCodecs.list()),
@@ -117,6 +120,7 @@ public final class StorageMenuNetwork {
 			StorageMenuDefinition definition,
 			boolean invulnerable,
 			boolean hologramLabel,
+			StorageMenuHologramSettings hologramSettings,
 			ShopDefinition shop
 		) {
 			List<SlotData> slots = definition.asList().stream()
@@ -136,10 +140,21 @@ public final class StorageMenuNetwork {
 				slots,
 				invulnerable,
 				hologramLabel,
+				hologramSettings == null ? StorageMenuHologramSettings.DEFAULT : hologramSettings,
 				shopEnabled,
 				listings,
 				viewContext.npcEntityId()
 			);
+		}
+
+		public static MenuData fromDefinition(
+			StorageMenuViewContext viewContext,
+			StorageMenuDefinition definition,
+			boolean invulnerable,
+			boolean hologramLabel,
+			ShopDefinition shop
+		) {
+			return fromDefinition(viewContext, definition, invulnerable, hologramLabel, StorageMenuHologramSettings.DEFAULT, shop);
 		}
 
 		public static MenuData fromDefinition(StorageMenuViewContext viewContext, StorageMenuDefinition definition, boolean invulnerable, boolean hologramLabel) {

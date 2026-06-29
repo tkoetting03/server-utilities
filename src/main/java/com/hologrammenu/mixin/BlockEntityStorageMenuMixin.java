@@ -52,7 +52,8 @@ public abstract class BlockEntityStorageMenuMixin implements StorageMenuHolder {
 			level,
 			blockEntity.getBlockPos(),
 			data.definition().title(),
-			data.hologramLabel()
+			data.hologramLabel(),
+			data.hologramSettings()
 		));
 	}
 

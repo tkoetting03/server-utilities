@@ -6,6 +6,7 @@ import com.hologrammenu.mixin.accessor.TextDisplayAccessor;
 import com.hologrammenu.storage.StorageMenuHologramLabels;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Brightness;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
@@ -30,6 +31,11 @@ public final class HologramHelper {
 	private static final double EDIT_LOOK_DOT_THRESHOLD = 0.92D;
 	private static final double EDIT_RAY_DISTANCE = 2.0D;
 	private static final double LINE_SPACING = 0.28D;
+	private static final int TRANSPARENT_BACKGROUND = 0x00000000;
+	private static final byte HOLOGRAM_TEXT_FLAGS = Display.TextDisplay.FLAG_SHADOW | Display.TextDisplay.FLAG_SEE_THROUGH;
+	private static final float HOLOGRAM_CULLING_WIDTH = 4.0F;
+	private static final float HOLOGRAM_CULLING_HEIGHT = 1.0F;
+	private static final float HOLOGRAM_VIEW_RANGE = 32.0F;
 
 	private HologramHelper() {
 	}
@@ -76,12 +82,16 @@ public final class HologramHelper {
 	}
 
 	public static Display.TextDisplay createStorageLabel(ServerLevel level, Vec3 position, Component text) {
+		return createStorageLabel(level, position, text, HologramScale.DEFAULT);
+	}
+
+	public static Display.TextDisplay createStorageLabel(ServerLevel level, Vec3 position, Component text, float scale) {
 		Display.TextDisplay display = new Display.TextDisplay(EntityType.TEXT_DISPLAY, level);
 		display.setPos(position.x, position.y, position.z);
 		display.setNoGravity(true);
 		display.setInvulnerable(true);
 		display.addTag(StorageMenuHologramLabels.STORAGE_LABEL_TAG);
-		setText(display, text);
+		setText(display, text, scale);
 		level.addFreshEntity(display);
 		return display;
 	}
@@ -100,7 +110,7 @@ public final class HologramHelper {
 		List<Display.TextDisplay> displays = new ArrayList<>();
 		for (int index = 0; index < normalized.size(); index++) {
 			HologramLineStack.Line line = normalized.get(index);
-			Vec3 linePosition = positionForLine(position, normalized.size(), index);
+			Vec3 linePosition = positionForLine(position, normalized.size(), index, line);
 			Display.TextDisplay display = createLine(level, linePosition, groupId, index, line);
 			displays.add(display);
 		}
@@ -154,8 +164,8 @@ public final class HologramHelper {
 		return group;
 	}
 
-	private static Vec3 positionForLine(Vec3 anchor, int lineCount, int index) {
-		return anchor.add(0.0D, (lineCount - 1 - index) * LINE_SPACING, 0.0D);
+	private static Vec3 positionForLine(Vec3 anchor, int lineCount, int index, HologramLineStack.Line line) {
+		return anchor.add(0.0D, (lineCount - 1 - index) * LINE_SPACING + line.heightOffset(), 0.0D);
 	}
 
 	private static Vec3 anchorPosition(List<Display.TextDisplay> displays) {
@@ -175,11 +185,23 @@ public final class HologramHelper {
 		if (accessor.hologrammenu$getLineWidth() <= 0) {
 			accessor.hologrammenu$setLineWidth(200);
 		}
-		accessor.hologrammenu$setFlags(Display.TextDisplay.FLAG_SHADOW);
+		configureShaderFriendlyDisplay(display);
 
 		DisplayAccessor displayAccessor = (DisplayAccessor) display;
 		displayAccessor.hologrammenu$setBillboardConstraints(Display.BillboardConstraints.CENTER);
 		HologramScale.apply(display, scale);
+	}
+
+	private static void configureShaderFriendlyDisplay(Display.TextDisplay display) {
+		display.setTextOpacity((byte)0xFF);
+		display.setBackgroundColor(TRANSPARENT_BACKGROUND);
+		display.setFlags(HOLOGRAM_TEXT_FLAGS);
+		display.setBrightnessOverride(Brightness.FULL_BRIGHT);
+		display.setShadowRadius(0.0F);
+		display.setShadowStrength(0.0F);
+		display.setViewRange(HOLOGRAM_VIEW_RANGE);
+		display.setWidth(HOLOGRAM_CULLING_WIDTH);
+		display.setHeight(HOLOGRAM_CULLING_HEIGHT);
 	}
 
 	public static Vec3 pickPlacementPosition(Player player, double maxDistance) {

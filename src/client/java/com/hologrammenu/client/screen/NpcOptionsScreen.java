@@ -7,13 +7,11 @@ import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.NpcRadiusSlider;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScaleText;
-import com.hologrammenu.client.screen.HeadPresetPickerOverlay;
 import com.hologrammenu.client.screen.TextStyleOverlay;
 import com.hologrammenu.client.screen.TextStylePanelPositions;
 import com.hologrammenu.client.screen.NpcHologramStackOverlay;
 import com.hologrammenu.client.screen.widget.LabeledFieldLayout;
 import com.hologrammenu.client.screen.widget.UiScale;
-import com.hologrammenu.head.HeadPresetIds;
 import com.hologrammenu.particle.ParticlePresetCatalog;
 import com.hologrammenu.particle.ParticlePresetEntry;
 import com.hologrammenu.npc.NpcHologramStack;
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class NpcOptionsScreen extends Screen {
-	private static final int BASE_CONTENT_ROWS = 11;
 	private static final int MAX_DIALOGUE_LINES = 4;
 	private static final Map<Integer, String> SESSION_SKIN_BY_ENTITY = new HashMap<>();
 
@@ -70,8 +67,6 @@ public final class NpcOptionsScreen extends Screen {
 	private TextStyleOverlay nameStyleOverlay;
 	private NpcHologramStackOverlay hologramStackOverlay;
 	private Button hologramsButton;
-	private Button headPresetsButton;
-	private HeadPresetPickerOverlay headPresetPickerOverlay;
 	private Button particleEffectButton;
 	private Button particlePresetsButton;
 	private ParticlePresetPickerOverlay particlePresetPickerOverlay;
@@ -92,16 +87,12 @@ public final class NpcOptionsScreen extends Screen {
 		java.util.List<NpcHologramStack.Entry> savedHologramStack = restoreHologramStack
 			? new java.util.ArrayList<>(hologramStack)
 			: null;
-		boolean restoreHeadPresets = headPresetPickerOverlay != null && headPresetPickerOverlay.isOpen();
 		boolean restoreParticlePresets = particlePresetPickerOverlay != null && particlePresetPickerOverlay.isOpen();
 		if (nameStyleOverlay != null) {
 			nameStyleOverlay.dispose();
 		}
 		if (hologramStackOverlay != null && restoreHologramStack) {
 			hologramStackOverlay.dispose();
-		}
-		if (headPresetPickerOverlay != null && restoreHeadPresets) {
-			headPresetPickerOverlay.close();
 		}
 		if (particlePresetPickerOverlay != null && restoreParticlePresets) {
 			particlePresetPickerOverlay.close();
@@ -134,10 +125,11 @@ public final class NpcOptionsScreen extends Screen {
 		int contentTop = ModPanelLayout.centeredContentTop(this.height, contentHeight);
 		int y = contentTop;
 
-		int styleWidth = UiScale.s(40);
+		int styleWidth = UiLayoutHelper.buttonWidth(this.font, Component.translatable("screen.hologrammenu.hologram_options.style"));
 		int nameGap = UiScale.s(4);
 		int nameFieldWidth = contentWidth - styleWidth - nameGap;
-		nameField = new EditBox(this.font, fieldX, y, nameFieldWidth, rowHeight, Component.translatable("screen.hologrammenu.npc_tool.display_name"));
+		int fieldY = y + LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP;
+		nameField = new EditBox(this.font, fieldX, fieldY, nameFieldWidth, rowHeight, Component.translatable("screen.hologrammenu.npc_tool.display_name"));
 		nameField.setMaxLength(64);
 		nameField.setValue(pendingName);
 		nameField.addFormatter((visible, start) -> TextFormats.editBoxFormat(styledDisplayName, visible, start));
@@ -147,41 +139,37 @@ public final class NpcOptionsScreen extends Screen {
 		});
 		addRenderableWidget(nameField);
 		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.hologram_options.style"), press -> toggleNameStyle())
-			.bounds(fieldX + nameFieldWidth + nameGap, y, styleWidth, rowHeight).build());
-		y += rowHeight + rowGap;
+			.bounds(fieldX + nameFieldWidth + nameGap, fieldY, styleWidth, rowHeight).build());
+		y += LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap;
 
 		hologramsButton = Button.builder(Component.translatable("screen.hologrammenu.npc_options.holograms"), press -> toggleHologramStack())
 			.bounds(fieldX, y, contentWidth, rowHeight).build();
 		addRenderableWidget(hologramsButton);
 		y += rowHeight + rowGap;
 
-		skinField = new EditBox(this.font, fieldX, y, contentWidth, rowHeight, Component.translatable("screen.hologrammenu.npc_tool.skin"));
+		fieldY = y + LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP;
+		skinField = new EditBox(this.font, fieldX, fieldY, contentWidth, rowHeight, Component.translatable("screen.hologrammenu.npc_tool.skin"));
 		skinField.setMaxLength(64);
 		skinField.setValue(pendingSkin);
 		skinField.setHint(Component.translatable("screen.hologrammenu.npc_tool.skin_hint"));
 		skinField.setResponder(this::rememberSkinValue);
 		addRenderableWidget(skinField);
 
-		headPresetsButton = Button.builder(Component.translatable("screen.hologrammenu.head_presets.button"), press -> toggleHeadPresets())
-			.bounds(fieldX, y + rowHeight + rowGap, contentWidth, rowHeight).build();
-		addRenderableWidget(headPresetsButton);
-
 		professionButton = Button.builder(professionLabel(), press -> {
 			professionIndex = (professionIndex + 1) % ClientSettings.NPC_PROFESSIONS.length;
 			press.setMessage(professionLabel());
-		}).bounds(fieldX, y, contentWidth, rowHeight).build();
+		}).bounds(fieldX, fieldY, contentWidth, rowHeight).build();
 		addRenderableWidget(professionButton);
-		y += (rowHeight + rowGap) * 2;
+		y += LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap;
 
 		dialogueFields.clear();
-		int dialogueLabelWidth = UiScale.s(54);
-		int dialogueFieldWidth = contentWidth - dialogueLabelWidth - rowGap;
 		for (int index = 0; index < pendingDialogueLines.size(); index++) {
+			fieldY = y + LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP;
 			EditBox field = new EditBox(
 				this.font,
-				fieldX + dialogueLabelWidth + rowGap,
-				y,
-				dialogueFieldWidth,
+				fieldX,
+				fieldY,
+				contentWidth,
 				rowHeight,
 				Component.translatable("screen.hologrammenu.npc_options.dialogue_line", index + 1)
 			);
@@ -197,7 +185,7 @@ public final class NpcOptionsScreen extends Screen {
 			});
 			dialogueFields.add(field);
 			addRenderableWidget(field);
-			y += rowHeight + rowGap;
+			y += LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap;
 		}
 
 		int halfDialogue = ModPanelLayout.columnWidth(contentWidth, 2, rowGap);
@@ -227,10 +215,12 @@ public final class NpcOptionsScreen extends Screen {
 		addRenderableWidget(headFollowButton);
 		y += rowHeight + rowGap;
 
+		int radiusWidth = Math.min(contentWidth, ModPanelLayout.CONTENT_WIDTH);
+		int radiusX = fieldX + (contentWidth - radiusWidth) / 2;
 		addRenderableWidget(new NpcRadiusSlider(
-			fieldX,
+			radiusX,
 			y,
-			contentWidth,
+			radiusWidth,
 			Component.translatable("screen.hologrammenu.npc_options.head_radius"),
 			headFollowRadius,
 			() -> headFollowRadius,
@@ -296,10 +286,6 @@ public final class NpcOptionsScreen extends Screen {
 		if (restoreHologramStack && savedHologramStack != null) {
 			hologramStackOverlay.open(savedHologramStack);
 		}
-		ensureHeadPresetPickerOverlay();
-		if (restoreHeadPresets) {
-			headPresetPickerOverlay.open();
-		}
 		ensureParticlePresetPickerOverlay();
 		if (restoreParticlePresets) {
 			particlePresetPickerOverlay.open();
@@ -307,8 +293,11 @@ public final class NpcOptionsScreen extends Screen {
 	}
 
 	private int contentHeight(int rowHeight, int rowGap, int sectionGap) {
-		return ModPanelLayout.stackHeight(BASE_CONTENT_ROWS + Math.max(1, pendingDialogueLines.size()), rowHeight, rowGap)
-			+ sectionGap
+		int labeledRows = 2 + Math.max(1, pendingDialogueLines.size());
+		int normalRowsWithGap = 7;
+		return labeledRows * (LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap)
+			+ normalRowsWithGap * (rowHeight + rowGap)
+			+ rowHeight + sectionGap
 			+ rowHeight;
 	}
 
@@ -522,8 +511,6 @@ public final class NpcOptionsScreen extends Screen {
 		boolean player = playerNpc;
 		skinField.visible = player;
 		skinField.active = player;
-		headPresetsButton.visible = player;
-		headPresetsButton.active = player;
 		professionButton.visible = !player;
 		professionButton.active = !player;
 	}
@@ -599,31 +586,56 @@ public final class NpcOptionsScreen extends Screen {
 			ModPanelLayout.hintY(contentTop),
 			0xA0A0A0
 		);
-		drawDialogueLabels(graphics, contentTop);
+		drawFieldLabels(graphics, contentTop);
 	}
 
-	private void drawDialogueLabels(GuiGraphicsExtractor graphics, int contentTop) {
+	private void drawFieldLabels(GuiGraphicsExtractor graphics, int contentTop) {
 		int contentWidth = ModPanelLayout.screenContentWidth(this.width);
 		int fieldX = ModPanelLayout.centeredX(this.width, contentWidth);
 		int rowHeight = UiLayoutHelper.buttonHeight(this.font);
 		int rowGap = ModPanelLayout.ROW_GAP;
-		int y = contentTop + (rowHeight + rowGap) * 4;
+		int y = contentTop;
+		drawFieldLabel(graphics, Component.translatable("screen.hologrammenu.npc_tool.display_name"), fieldX, y);
+		y += LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap;
+		y += rowHeight + rowGap;
+		drawFieldLabel(
+			graphics,
+			playerNpc
+				? Component.translatable("screen.hologrammenu.npc_tool.skin")
+				: Component.translatable("screen.hologrammenu.npc_tool.profession"),
+			fieldX,
+			y
+		);
+		y += LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap;
 		for (int index = 0; index < pendingDialogueLines.size(); index++) {
-			UiScaleText.draw(
-				graphics,
-				this.font,
-				Component.translatable("screen.hologrammenu.npc_options.dialogue_line", index + 1),
-				fieldX,
-				y + UiScale.s(4),
-				0xA0A0A0
-			);
-			y += rowHeight + rowGap;
+			drawFieldLabel(graphics, Component.translatable("screen.hologrammenu.npc_options.dialogue_line", index + 1), fieldX, y);
+			y += LabeledFieldLayout.LABEL_HEIGHT + LabeledFieldLayout.LABEL_GAP + rowHeight + rowGap;
 		}
+	}
+
+	private void drawFieldLabel(GuiGraphicsExtractor graphics, Component label, int x, int y) {
+		UiScaleText.draw(graphics, this.font, label, x, y, 0xFFFFFF);
 	}
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		this.extractTransparentBackground(graphics);
+		int rowHeight = UiLayoutHelper.buttonHeight(this.font);
+		int rowGap = ModPanelLayout.ROW_GAP;
+		int sectionGap = ModPanelLayout.SECTION_GAP;
+		int contentHeight = contentHeight(rowHeight, rowGap, sectionGap);
+		int contentTop = ModPanelLayout.centeredContentTop(this.height, contentHeight);
+		int contentWidth = ModPanelLayout.screenContentWidth(this.width);
+		int panelPadding = ModPanelLayout.PANEL_PADDING;
+		int left = ModPanelLayout.centeredX(this.width, contentWidth) - panelPadding;
+		int top = ModPanelLayout.titleY(contentTop) - panelPadding;
+		int right = left + contentWidth + panelPadding * 2;
+		int bottom = contentTop + contentHeight + panelPadding;
+		graphics.fill(left, top, right, bottom, 0xF0181818);
+		graphics.fill(left, top, right, top + 1, 0xFF6A6A6A);
+		graphics.fill(left, bottom - 1, right, bottom, 0xFF2A2A2A);
+		graphics.fill(left, top, left + 1, bottom, 0xFF6A6A6A);
+		graphics.fill(right - 1, top, right, bottom, 0xFF2A2A2A);
 	}
 
 	@Override
@@ -636,9 +648,6 @@ public final class NpcOptionsScreen extends Screen {
 		}
 		if (hologramStackOverlay != null) {
 			hologramStackOverlay.close();
-		}
-		if (headPresetPickerOverlay != null) {
-			headPresetPickerOverlay.close();
 		}
 		if (particlePresetPickerOverlay != null) {
 			particlePresetPickerOverlay.close();
@@ -701,36 +710,6 @@ public final class NpcOptionsScreen extends Screen {
 		return TextStylePanelPositions.besideField(this, fieldX, contentWidth, anchorY);
 	}
 
-	private void toggleHeadPresets() {
-		ensureHeadPresetPickerOverlay();
-		headPresetPickerOverlay.toggle();
-	}
-
-	private void ensureHeadPresetPickerOverlay() {
-		if (headPresetPickerOverlay != null) {
-			return;
-		}
-		headPresetPickerOverlay = new HeadPresetPickerOverlay(
-			this,
-			entry -> {
-				if (skinField != null) {
-					skinField.setValue(HeadPresetIds.encode(entry.id()));
-					rememberSkinValue(skinField.getValue());
-				}
-			},
-			this::headPresetPanelPosition
-		);
-	}
-
-	private int[] headPresetPanelPosition() {
-		int contentWidth = ModPanelLayout.screenContentWidth(this.width);
-		int fieldX = ModPanelLayout.centeredX(this.width, contentWidth);
-		int anchorY = headPresetsButton != null
-			? headPresetsButton.getY()
-			: skinField != null ? skinField.getY() : 0;
-		return TextStylePanelPositions.besideField(this, fieldX, contentWidth, anchorY);
-	}
-
 	private void toggleParticlePresets() {
 		ensureParticlePresetPickerOverlay();
 		particlePresetPickerOverlay.toggle();
@@ -766,9 +745,6 @@ public final class NpcOptionsScreen extends Screen {
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		if (particlePresetPickerOverlay != null && particlePresetPickerOverlay.isOpen() && particlePresetPickerOverlay.mouseScrolled(scrollY)) {
-			return true;
-		}
-		if (headPresetPickerOverlay != null && headPresetPickerOverlay.isOpen() && headPresetPickerOverlay.mouseScrolled(scrollY)) {
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);

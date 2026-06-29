@@ -75,6 +75,7 @@ public final class TextStyleOverlay {
 	private final List<GuiEventListener> widgets = new ArrayList<>();
 	private final List<TextPart> parts = new ArrayList<>();
 	private final List<EditBox> partFields = new ArrayList<>();
+	private final List<Integer> partFieldPartIndices = new ArrayList<>();
 	private final List<String> loreLines = new ArrayList<>();
 	private final List<EditBox> loreLineFields = new ArrayList<>();
 	private MultiLineEditBox loreParagraphField;
@@ -94,6 +95,7 @@ public final class TextStyleOverlay {
 	private final Map<StyledText.Effect, Button> effectButtons = new EnumMap<>(StyledText.Effect.class);
 	private final Set<AbstractWidget> selectionWidgets = Collections.newSetFromMap(new IdentityHashMap<>());
 	private int selectedPartIndex;
+	private boolean partsCollapsed;
 	private boolean open;
 	private Runnable onClose;
 	private DraggablePanelGroup dragGroup;
@@ -300,7 +302,7 @@ public final class TextStyleOverlay {
 		int partCount = parts.size();
 		boolean gradientExpanded = colorEditMode == ColorEditMode.GRADIENT;
 		if (!isAnvilMode()) {
-			return TextStylePanelWidget.panelHeight(partCount, 0, gradientExpanded);
+			return TextStylePanelWidget.panelHeight(partCount, 0, gradientExpanded, partsCollapsed);
 		}
 		int lineCount = Math.max(1, Math.min(loreLines.size(), StorageMenuItemLore.MAX_LINES));
 		return AnvilEditorPanelWidget.panelHeight(
@@ -308,7 +310,8 @@ public final class TextStyleOverlay {
 			partCount,
 			lineCount,
 			gradientExpanded,
-			anvilActiveTab == AnvilEditorTab.LORE && loreColorTableOpen
+			anvilActiveTab == AnvilEditorTab.LORE && loreColorTableOpen,
+			partsCollapsed
 		);
 	}
 
@@ -323,6 +326,7 @@ public final class TextStyleOverlay {
 			parts.add(TextPart.empty());
 		}
 		selectedPartIndex = 0;
+		partsCollapsed = false;
 		syncColorModeFromSelectedPart();
 	}
 
@@ -345,7 +349,8 @@ public final class TextStyleOverlay {
 				partCount,
 				lineCount,
 				colorEditMode == ColorEditMode.GRADIENT,
-				anvilActiveTab == AnvilEditorTab.LORE && loreColorTableOpen
+				anvilActiveTab == AnvilEditorTab.LORE && loreColorTableOpen,
+				partsCollapsed
 			);
 			screenInvoker.hologrammenu$addRenderableOnly(panelWidget);
 			widgets.add(panelWidget);
@@ -357,7 +362,14 @@ public final class TextStyleOverlay {
 				buildLoreWidgets(panelX, panelY, lineCount);
 			}
 		} else {
-			var panelWidget = new TextStylePanelWidget(panelX, panelY, partCount, 0, colorEditMode == ColorEditMode.GRADIENT);
+			var panelWidget = new TextStylePanelWidget(
+				panelX,
+				panelY,
+				partCount,
+				0,
+				colorEditMode == ColorEditMode.GRADIENT,
+				partsCollapsed
+			);
 			screenInvoker.hologrammenu$addRenderableOnly(panelWidget);
 			widgets.add(panelWidget);
 			dragGroup.track(panelWidget);
@@ -382,7 +394,12 @@ public final class TextStyleOverlay {
 
 	private void buildStyleWidgets(int panelX, int panelY, int contentTopOffset, int partCount) {
 		boolean gradientExpanded = colorEditMode == ColorEditMode.GRADIENT;
-		TextStylePanelLayout.Metrics layout = TextStylePanelLayout.metrics(partCount, contentTopOffset, gradientExpanded);
+		TextStylePanelLayout.Metrics layout = TextStylePanelLayout.metrics(
+			partCount,
+			contentTopOffset,
+			gradientExpanded,
+			partsCollapsed
+		);
 		int left = panelX + TextStylePanelLayout.CONTENT_LEFT;
 		int contentWidth = TextStylePanelLayout.CONTENT_WIDTH;
 		int gap = layout.buttonRowGap();
@@ -777,7 +794,7 @@ public final class TextStyleOverlay {
 			refreshLoreSelectionOutlines();
 		});
 		attach(loreParagraphField);
-		y += paragraphHeight + rowGap;
+		y += paragraphHeight + AnvilEditorMetrics.loreParagraphBottomGap();
 
 		int half = ModPanelLayout.columnWidth(fieldWidth, 2, rowGap);
 		if (loreColorTableOpen) {
@@ -835,9 +852,9 @@ public final class TextStyleOverlay {
 		int actionRowY = y + buttonH + ModPanelLayout.SECTION_GAP;
 		int footerY = panelY + AnvilEditorMetrics.loreFooterTop(lineCount);
 
-		attach(iconButton(fieldX, actionRowY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_expand_style"), new ItemStack(Items.NAME_TAG), press -> openLoreLineStyle()));
+		attach(iconButton(fieldX, actionRowY, fieldWidth, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_expand_style"), new ItemStack(Items.NAME_TAG), press -> openLoreLineStyle()));
 
-		attach(iconButton(fieldX + half + rowGap, actionRowY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_regenerate"), new ItemStack(Items.CRAFTING_TABLE), press -> {
+		attach(iconButton(fieldX, actionRowY + buttonH + rowGap, fieldWidth, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_regenerate"), new ItemStack(Items.CRAFTING_TABLE), press -> {
 			rebuildParagraphLoreFromDraft();
 			applyLore();
 		}));
@@ -926,7 +943,7 @@ public final class TextStyleOverlay {
 			y += buttonH + rowGap;
 		}
 
-		attach(iconButton(fieldX, y, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> {
+		attach(iconButton(fieldX, y, half, buttonH, Component.translatable("screen.hologrammenu.text_style.apply"), new ItemStack(Items.EMERALD), press -> {
 			applyLoreColorChoice(true);
 			loreColorTableOpen = false;
 			relayout();
@@ -1400,14 +1417,34 @@ public final class TextStyleOverlay {
 
 	private void buildPartFields(int panelX, int panelY, int partCount, int contentTopOffset, TextStylePanelLayout.Metrics layout) {
 		partFields.clear();
+		partFieldPartIndices.clear();
 		boolean removable = partCount > 1;
+		int selectedVisiblePart = Math.max(0, Math.min(selectedPartIndex, partCount - 1));
 		int buttonHeight = layout.buttonHeight();
 		int fieldWidth = TextStylePanelLayout.partFieldWidth(removable, buttonHeight);
 		int left = panelX + TextStylePanelLayout.CONTENT_LEFT;
 		int removeX = left + fieldWidth + layout.buttonRowGap();
 
+		if (layout.hasPartToggle(partCount)) {
+			Component toggleLabel = partsCollapsed
+				? Component.translatable("screen.hologrammenu.text_style.parts_expand")
+				: Component.translatable("screen.hologrammenu.text_style.parts_collapse");
+			attach(Button.builder(toggleLabel, press -> {
+				syncPartsFromFields();
+				partsCollapsed = !partsCollapsed;
+				relayout();
+				releaseButtonFocus(press);
+			})
+				.bounds(left, panelY + layout.partTop(), TextStylePanelLayout.CONTENT_WIDTH, buttonHeight)
+				.build());
+		}
+
+		int visibleRow = 0;
 		for (int index = 0; index < partCount; index++) {
-			int fieldY = panelY + layout.partTop() + index * layout.partRowHeight();
+			if (partsCollapsed && partCount > 1 && index != selectedVisiblePart) {
+				continue;
+			}
+			int fieldY = panelY + layout.partListTop(partCount) + visibleRow * layout.partRowHeight();
 			TextPart part = parts.get(index);
 			int partIndex = index;
 
@@ -1430,15 +1467,17 @@ public final class TextStyleOverlay {
 			});
 			attach(field);
 			partFields.add(field);
+			partFieldPartIndices.add(partIndex);
 
 			if (removable) {
 				attach(Button.builder(Component.literal("x"), press -> removePart(partIndex))
 					.bounds(removeX, fieldY, buttonHeight, buttonHeight)
 					.build());
 			}
+			visibleRow++;
 		}
 
-		int addY = panelY + layout.partTop() + partCount * layout.partRowHeight();
+		int addY = panelY + layout.partListTop(partCount) + visibleRow * layout.partRowHeight();
 		if (partCount < MAX_PARTS) {
 			attach(Button.builder(Component.translatable("screen.hologrammenu.text_style.add_part"), press -> addPart())
 				.bounds(left, addY, TextStylePanelLayout.CONTENT_WIDTH, buttonHeight)
@@ -1474,6 +1513,9 @@ public final class TextStyleOverlay {
 		syncPartsFromFields();
 		parts.remove(index);
 		selectedPartIndex = Math.min(selectedPartIndex, parts.size() - 1);
+		if (parts.size() <= 1) {
+			partsCollapsed = false;
+		}
 		rebuildDraftFromParts();
 		applyDraftToTarget();
 		relayout();
@@ -1485,6 +1527,7 @@ public final class TextStyleOverlay {
 		parts.add(TextPart.empty());
 		parts.get(0).text = combined;
 		selectedPartIndex = 0;
+		partsCollapsed = false;
 		rebuildDraftFromParts();
 		applyDraftToTarget();
 		relayout();
@@ -1495,15 +1538,28 @@ public final class TextStyleOverlay {
 	}
 
 	private void syncPartsFromFields() {
-		for (int index = 0; index < partFields.size() && index < parts.size(); index++) {
-			parts.get(index).text = partFields.get(index).getValue();
+		for (int index = 0; index < partFields.size() && index < partFieldPartIndices.size(); index++) {
+			int partIndex = partFieldPartIndices.get(index);
+			if (partIndex >= 0 && partIndex < parts.size()) {
+				parts.get(partIndex).text = partFields.get(index).getValue();
+			}
 		}
 	}
 
 	private void syncPartField(int index) {
-		if (index >= 0 && index < partFields.size() && index < parts.size()) {
-			partFields.get(index).setValue(parts.get(index).text);
+		EditBox field = partFieldForPart(index);
+		if (field != null && index >= 0 && index < parts.size()) {
+			field.setValue(parts.get(index).text);
 		}
+	}
+
+	private EditBox partFieldForPart(int partIndex) {
+		for (int index = 0; index < partFields.size() && index < partFieldPartIndices.size(); index++) {
+			if (partFieldPartIndices.get(index) == partIndex) {
+				return partFields.get(index);
+			}
+		}
+		return null;
 	}
 
 	private void rebuildDraftFromParts() {
@@ -1538,11 +1594,11 @@ public final class TextStyleOverlay {
 	}
 
 	private int[] selectedPartSelection() {
-		if (selectedPartIndex < 0 || selectedPartIndex >= partFields.size()) {
+		EditBox field = partFieldForPart(selectedPartIndex);
+		if (field == null) {
 			int end = selectedPart().text.length();
 			return new int[] {end, end};
 		}
-		EditBox field = partFields.get(selectedPartIndex);
 		int cursor = field.getCursorPosition();
 		int highlight = ((EditBoxAccessor) field).hologrammenu$getHighlightPos();
 		return new int[] {Math.min(cursor, highlight), Math.max(cursor, highlight)};
@@ -1674,9 +1730,7 @@ public final class TextStyleOverlay {
 			}
 		}
 
-		if (selectedPartIndex >= 0 && selectedPartIndex < partFields.size()) {
-			markSelectionWidget(partFields.get(selectedPartIndex));
-		}
+		markSelectionWidget(partFieldForPart(selectedPartIndex));
 	}
 
 	private void markSelectionWidget(AbstractWidget widget) {
@@ -1744,6 +1798,7 @@ public final class TextStyleOverlay {
 		}
 		widgets.clear();
 		partFields.clear();
+		partFieldPartIndices.clear();
 		loreLineFields.clear();
 		loreParagraphField = null;
 		anvilStyleTabButton = null;

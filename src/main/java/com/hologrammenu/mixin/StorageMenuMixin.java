@@ -18,7 +18,7 @@ public abstract class StorageMenuMixin {
 			return;
 		}
 
-		if (StorageMenuInteractions.handleClick((AbstractContainerMenu) (Object) this, slotIndex, input, serverPlayer)) {
+		if (StorageMenuInteractions.handleClick((AbstractContainerMenu) (Object) this, slotIndex, button, input, serverPlayer)) {
 			ci.cancel();
 		}
 	}

@@ -46,7 +46,7 @@ public final class StorageMenuInteractions {
 		});
 	}
 
-	public static boolean handleClick(AbstractContainerMenu menu, int slotIndex, ContainerInput input, ServerPlayer player) {
+	public static boolean handleClick(AbstractContainerMenu menu, int slotIndex, int button, ContainerInput input, ServerPlayer player) {
 		VirtualStorageContainer container = VirtualStorageContainer.asVirtual(StorageMenuLocator.extractContainer(menu));
 		if (container == null) {
 			return false;
@@ -58,13 +58,26 @@ public final class StorageMenuInteractions {
 
 		Slot slot = menu.slots.get(slotIndex);
 		if (slot.container != container) {
-			return false;
+			return input == ContainerInput.QUICK_MOVE && !slot.getItem().isEmpty();
 		}
 
 		StorageMenuSlotConfig config = container.definition().slot(slot.getContainerSlot());
 		int menuSlot = slot.getContainerSlot();
 
-		if (input == ContainerInput.PICKUP && ShopTransactions.tryPurchase(player, (ServerLevel) player.level(), container, menuSlot)) {
+		if (!menu.getCarried().isEmpty()) {
+			return true;
+		}
+
+		if (input != ContainerInput.PICKUP) {
+			return true;
+		}
+
+		if (ShopTransactions.tryPurchase(player, (ServerLevel) player.level(), container, menuSlot)) {
+			return true;
+		}
+
+		if (button == 1 && config.hasSubMenu()) {
+			StorageMenuNavigation.openSubMenu(player, container.viewContext(), config.subMenuId());
 			return true;
 		}
 
