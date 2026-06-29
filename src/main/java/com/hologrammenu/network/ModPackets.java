@@ -163,6 +163,7 @@ public final class ModPackets {
 
 	public record NpcConfigPayload(
 		int entityId,
+		String skinName,
 		boolean headFollowEnabled,
 		float headFollowRadius,
 		String dialogue,
@@ -176,6 +177,8 @@ public final class ModPackets {
 		public static final StreamCodec<RegistryFriendlyByteBuf, NpcConfigPayload> CODEC = StreamCodec.composite(
 			ByteBufCodecs.VAR_INT,
 			NpcConfigPayload::entityId,
+			ByteBufCodecs.STRING_UTF8,
+			NpcConfigPayload::skinName,
 			ByteBufCodecs.BOOL,
 			NpcConfigPayload::headFollowEnabled,
 			ByteBufCodecs.FLOAT,

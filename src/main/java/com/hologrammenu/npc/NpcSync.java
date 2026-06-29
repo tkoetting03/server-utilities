@@ -62,7 +62,7 @@ public final class NpcSync {
 	}
 
 	private static ModPackets.NpcConfigPayload configPayload(LivingEntity npc) {
-		return NpcConfig.read(npc).toPayload(npc.getId());
+		return NpcConfig.read(npc).toPayload(npc.getId(), NpcHelper.readSkinName(npc));
 	}
 
 	private static Set<ServerPlayer> trackingPlayers(ServerLevel level, LivingEntity npc) {

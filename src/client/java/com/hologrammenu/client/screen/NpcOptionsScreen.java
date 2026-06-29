@@ -75,6 +75,7 @@ public final class NpcOptionsScreen extends Screen {
 	private Button particleEffectButton;
 	private Button particlePresetsButton;
 	private ParticlePresetPickerOverlay particlePresetPickerOverlay;
+	private boolean deleting;
 
 	public NpcOptionsScreen(int entityId) {
 		super(Component.translatable("screen.hologrammenu.npc_options.title"));
@@ -380,15 +381,17 @@ public final class NpcOptionsScreen extends Screen {
 	}
 
 	private String resolveInitialSkin(LivingEntity entity) {
+		String synced = NpcClientConfigStore.skinName(entityId);
 		if (SESSION_SKIN_BY_ENTITY.containsKey(entityId)) {
-			return SESSION_SKIN_BY_ENTITY.get(entityId);
+			String session = SESSION_SKIN_BY_ENTITY.get(entityId);
+			return session == null || session.isBlank() ? synced : session;
 		}
-		return NpcHelper.readSkinName(entity);
+		return synced.isBlank() ? NpcHelper.readSkinName(entity) : synced;
 	}
 
 	private void rememberSkinValue(String value) {
-		pendingSkin = value;
-		SESSION_SKIN_BY_ENTITY.put(entityId, value);
+		pendingSkin = value == null ? "" : value;
+		SESSION_SKIN_BY_ENTITY.put(entityId, pendingSkin);
 	}
 
 	private void loadFromEntity(LivingEntity entity) {
@@ -469,6 +472,7 @@ public final class NpcOptionsScreen extends Screen {
 	private void sendUpdatePayload() {
 		styledDisplayName = TextFormats.parse(styledDisplayName).withText(nameField.getValue()).serialize();
 		hologramStack = NpcHologramStack.withNameText(hologramStack, styledDisplayName);
+		rememberSkinValue(skinField == null ? "" : skinField.getValue());
 		if (!dialogueFields.isEmpty()) {
 			pendingDialogueLines.clear();
 			for (EditBox field : dialogueFields) {
@@ -479,7 +483,7 @@ public final class NpcOptionsScreen extends Screen {
 			entityId,
 			"update",
 			styledDisplayName,
-			skinField == null ? "" : skinField.getValue().trim(),
+			pendingSkin.trim(),
 			ClientSettings.NPC_PROFESSIONS[Math.floorMod(professionIndex, ClientSettings.NPC_PROFESSIONS.length)].identifier().toString(),
 			serializeDialogueLines(),
 			headFollowEnabled,
@@ -493,6 +497,7 @@ public final class NpcOptionsScreen extends Screen {
 	}
 
 	private void delete() {
+		deleting = true;
 		SESSION_SKIN_BY_ENTITY.remove(entityId);
 		NpcEditorSessionState.clear(entityId);
 		ClientPlayNetworking.send(new ModPackets.NpcEditPayload(
@@ -623,6 +628,9 @@ public final class NpcOptionsScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		if (!deleting) {
+			captureFieldValues();
+		}
 		if (nameStyleOverlay != null) {
 			nameStyleOverlay.dispose();
 		}

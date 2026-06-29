@@ -82,8 +82,13 @@ public record NpcConfig(
 	}
 
 	public ModPackets.NpcConfigPayload toPayload(int entityId) {
+		return toPayload(entityId, "");
+	}
+
+	public ModPackets.NpcConfigPayload toPayload(int entityId, String skinName) {
 		return new ModPackets.NpcConfigPayload(
 			entityId,
+			skinName == null ? "" : skinName,
 			headFollowEnabled,
 			clampRadius(headFollowRadius),
 			dialogue == null ? "" : dialogue,
