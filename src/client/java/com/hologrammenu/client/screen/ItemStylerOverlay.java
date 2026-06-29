@@ -32,7 +32,7 @@ public final class ItemStylerOverlay {
 	public ItemStylerOverlay(AbstractContainerScreen<?> screen, AbstractContainerScreenAccessor layout) {
 		this.screen = screen;
 		this.screenInvoker = (ScreenInvoker) (Screen) screen;
-		this.styleOverlay = new TextStyleOverlay(
+		this.styleOverlay = TextStyleOverlay.forItemStyler(
 			screen,
 			this::plainName,
 			TextStyleTarget.plainField(this::plainName, ignored -> {
@@ -40,7 +40,8 @@ public final class ItemStylerOverlay {
 				styledName = serialized;
 				ClientPlayNetworking.send(new ModPackets.ItemStylerApplyNamePayload(serialized));
 			}),
-			() -> TextStylePanelPositions.besideContainer(layout, screen)
+			() -> TextStylePanelPositions.besideContainer(layout, screen),
+			this::styledStack
 		);
 		this.styleOverlay.setOnClose(() -> {
 			if (styleButton != null) {
@@ -99,7 +100,7 @@ public final class ItemStylerOverlay {
 	private void toggleStylePanel() {
 		loadNameFromStack();
 		int[] position = TextStylePanelPositions.besideContainer((AbstractContainerScreenAccessor) screen, screen);
-		styleOverlay.toggle(styledName, position[0], position[1]);
+		styleOverlay.toggleAnvilTab(styledName, position[0], position[1], AnvilEditorTab.STYLE);
 	}
 
 	private void applyName() {

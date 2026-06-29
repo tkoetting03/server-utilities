@@ -70,6 +70,7 @@ public final class TextStyleOverlay {
 	private final TextStyleTarget target;
 	private final Supplier<int[]> panelPositionSupplier;
 	private final Supplier<ItemStack> anvilStackSupplier;
+	private final boolean showEffectsTab;
 	private final ScreenInvoker screenInvoker;
 	private final List<GuiEventListener> widgets = new ArrayList<>();
 	private final List<TextPart> parts = new ArrayList<>();
@@ -192,7 +193,7 @@ public final class TextStyleOverlay {
 		TextStyleTarget target,
 		Supplier<int[]> panelPositionSupplier
 	) {
-		this(parent, plainTextSupplier, target, panelPositionSupplier, null);
+		this(parent, plainTextSupplier, target, panelPositionSupplier, null, false);
 	}
 
 	public static TextStyleOverlay forAnvil(
@@ -202,7 +203,17 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> stackSupplier
 	) {
-		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier);
+		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, true);
+	}
+
+	public static TextStyleOverlay forItemStyler(
+		Screen parent,
+		Supplier<String> plainTextSupplier,
+		TextStyleTarget target,
+		Supplier<int[]> panelPositionSupplier,
+		Supplier<ItemStack> stackSupplier
+	) {
+		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, false);
 	}
 
 	public TextStyleOverlay(
@@ -212,11 +223,23 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> anvilStackSupplier
 	) {
+		this(parent, plainTextSupplier, target, panelPositionSupplier, anvilStackSupplier, anvilStackSupplier != null);
+	}
+
+	private TextStyleOverlay(
+		Screen parent,
+		Supplier<String> plainTextSupplier,
+		TextStyleTarget target,
+		Supplier<int[]> panelPositionSupplier,
+		Supplier<ItemStack> anvilStackSupplier,
+		boolean showEffectsTab
+	) {
 		this.parent = parent;
 		this.plainTextSupplier = plainTextSupplier;
 		this.target = target;
 		this.panelPositionSupplier = panelPositionSupplier;
 		this.anvilStackSupplier = anvilStackSupplier;
+		this.showEffectsTab = showEffectsTab;
 		this.screenInvoker = (ScreenInvoker) parent;
 	}
 
@@ -325,7 +348,7 @@ public final class TextStyleOverlay {
 		}
 
 		if (isAnvilMode()) {
-			anvilActiveTab = restoredTab;
+			anvilActiveTab = restoredTab == AnvilEditorTab.EFFECTS && !showEffectsTab ? AnvilEditorTab.STYLE : restoredTab;
 			anvilStyleFocus = AnvilStyleFocus.RENAME;
 		}
 		draft = savedDraft.withText(stylePlainTextSupplier().get());
@@ -749,7 +772,8 @@ public final class TextStyleOverlay {
 		int tabY = panelY + ModPanelLayout.CONTENT_TOP;
 		int tabGap = ModPanelLayout.ROW_GAP;
 		int tabHeight = AnvilEditorMetrics.tabButtonHeight();
-		int tabWidth = ModPanelLayout.columnWidth(contentWidth, 3, tabGap);
+		int tabCount = showEffectsTab ? 3 : 2;
+		int tabWidth = ModPanelLayout.columnWidth(contentWidth, tabCount, tabGap);
 		anvilStyleTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.tab.style"), press -> {
 				switchAnvilTab(AnvilEditorTab.STYLE);
 				releaseButtonFocus(press);
@@ -762,19 +786,26 @@ public final class TextStyleOverlay {
 			})
 			.bounds(left + tabWidth + tabGap, tabY, tabWidth, tabHeight)
 			.build();
-		anvilEffectsTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.tab.effects"), press -> {
-				switchAnvilTab(AnvilEditorTab.EFFECTS);
-				releaseButtonFocus(press);
-			})
-			.bounds(left + (tabWidth + tabGap) * 2, tabY, tabWidth, tabHeight)
-			.build();
 		attach(anvilStyleTabButton);
 		attach(anvilLoreTabButton);
-		attach(anvilEffectsTabButton);
+		if (showEffectsTab) {
+			anvilEffectsTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.tab.effects"), press -> {
+					switchAnvilTab(AnvilEditorTab.EFFECTS);
+					releaseButtonFocus(press);
+				})
+				.bounds(left + (tabWidth + tabGap) * 2, tabY, tabWidth, tabHeight)
+				.build();
+			attach(anvilEffectsTabButton);
+		} else {
+			anvilEffectsTabButton = null;
+		}
 	}
 
 	private void switchAnvilTab(AnvilEditorTab tab) {
 		if (!isAnvilMode() || anvilActiveTab == tab) {
+			return;
+		}
+		if (tab == AnvilEditorTab.EFFECTS && !showEffectsTab) {
 			return;
 		}
 		if (anvilActiveTab == AnvilEditorTab.STYLE) {
@@ -810,16 +841,22 @@ public final class TextStyleOverlay {
 	}
 
 	private void updateAnvilTabSelection() {
-		if (!isAnvilMode() || anvilStyleTabButton == null || anvilLoreTabButton == null || anvilEffectsTabButton == null) {
+		if (!isAnvilMode() || anvilStyleTabButton == null || anvilLoreTabButton == null) {
 			return;
 		}
 		ModUiSelectionState.unmarkSelected(anvilStyleTabButton);
 		ModUiSelectionState.unmarkSelected(anvilLoreTabButton);
-		ModUiSelectionState.unmarkSelected(anvilEffectsTabButton);
+		if (anvilEffectsTabButton != null) {
+			ModUiSelectionState.unmarkSelected(anvilEffectsTabButton);
+		}
 		switch (anvilActiveTab) {
 			case STYLE -> ModUiSelectionState.markSelected(anvilStyleTabButton);
 			case LORE -> ModUiSelectionState.markSelected(anvilLoreTabButton);
-			case EFFECTS -> ModUiSelectionState.markSelected(anvilEffectsTabButton);
+			case EFFECTS -> {
+				if (anvilEffectsTabButton != null) {
+					ModUiSelectionState.markSelected(anvilEffectsTabButton);
+				}
+			}
 		}
 	}
 
