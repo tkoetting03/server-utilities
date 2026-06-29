@@ -55,6 +55,8 @@ import java.util.function.Supplier;
 public final class TextStyleOverlay {
 	private static final int MAX_PARTS = 6;
 	private static final int BUTTON_PAD = 0;
+	private static final int DEFAULT_LORE_BASE_COLOR = 0xA0A0A0;
+	private static final int DEFAULT_LORE_ACCENT_COLOR = 0x55FFFF;
 	private static final StyledText.Effect[] ALL_EFFECTS = {
 		StyledText.Effect.BOLD,
 		StyledText.Effect.ITALIC,
@@ -101,8 +103,8 @@ public final class TextStyleOverlay {
 	private AnvilStyleFocus anvilStyleFocus = AnvilStyleFocus.RENAME;
 	private int selectedLoreLineIndex;
 	private LoreDynamicStyle loreDynamicStyle = LoreDynamicStyle.CLEAN;
-	private int loreBaseColor = 0xA0A0A0;
-	private int loreAccentColor = 0x55FFFF;
+	private int loreBaseColor = DEFAULT_LORE_BASE_COLOR;
+	private int loreAccentColor = DEFAULT_LORE_ACCENT_COLOR;
 	private int loreWrapWidth = 32;
 	private boolean loreColorTableOpen;
 	private SelectionRange loreColorSelection = SelectionRange.NONE;
@@ -967,7 +969,7 @@ public final class TextStyleOverlay {
 		})
 			.bounds(fieldX + half + rowGap, actionRowY, half, buttonH).build());
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.storage_menu.name_clear"), press -> clearLore())
+		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_reset"), press -> resetLore())
 			.bounds(fieldX, footerY, half, buttonH).build());
 
 		attach(Button.builder(Component.translatable("gui.done"), press -> close())
@@ -1477,10 +1479,18 @@ public final class TextStyleOverlay {
 		ClientPlayNetworking.send(new ModPackets.AnvilSetLorePayload(payload));
 	}
 
-	private void clearLore() {
+	private void resetLore() {
 		loreLines.clear();
 		loreLines.add("");
 		loreParagraphDraft = StyledText.EMPTY;
+		loreParagraphEffects.clear();
+		loreBaseColor = DEFAULT_LORE_BASE_COLOR;
+		loreAccentColor = DEFAULT_LORE_ACCENT_COLOR;
+		loreColorSelection = SelectionRange.NONE;
+		loreColorTableOpen = false;
+		colorEditMode = ColorEditMode.SOLID;
+		gradientTarget = GradientTarget.START;
+		loreDynamicStyle = LoreDynamicStyle.CLEAN;
 		selectedLoreLineIndex = 0;
 		relayout();
 		ClientPlayNetworking.send(new ModPackets.AnvilSetLorePayload(List.of()));
