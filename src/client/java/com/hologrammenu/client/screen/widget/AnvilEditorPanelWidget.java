@@ -61,7 +61,6 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 		return switch (activeTab) {
 			case STYLE -> AnvilEditorMetrics.stylePanelHeight(partCount, gradientExpanded);
 			case LORE -> AnvilEditorMetrics.lorePanelHeight(lineCount, loreColorTableOpen, gradientExpanded);
-			case EFFECTS -> AnvilEditorMetrics.effectsPanelHeight();
 		};
 	}
 
@@ -69,7 +68,6 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 		return switch (activeTab) {
 			case STYLE -> Component.translatable("screen.hologrammenu.text_style.title");
 			case LORE -> Component.translatable("screen.hologrammenu.anvil.lore_title");
-			case EFFECTS -> Component.translatable("screen.hologrammenu.anvil.effects_title");
 		};
 	}
 
@@ -127,15 +125,6 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 					graphics,
 					font,
 					Component.translatable("screen.hologrammenu.anvil.lore_lines_label"),
-					contentLeft,
-					y + AnvilEditorMetrics.tabContentTop(),
-					0xA0A0A0
-				);
-			} else if (activeTab == AnvilEditorTab.EFFECTS) {
-				UiScaleText.draw(
-					graphics,
-					font,
-					Component.translatable("screen.hologrammenu.anvil.effects_label"),
 					contentLeft,
 					y + AnvilEditorMetrics.tabContentTop(),
 					0xA0A0A0

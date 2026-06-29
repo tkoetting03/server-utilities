@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import java.util.function.BooleanSupplier;
 
 public class HotkeyHubScreen extends Screen {
-	private static final int CONTENT_ROW_COUNT = 9;
+	private static final int CONTENT_ROW_COUNT = 7;
 
 	public HotkeyHubScreen() {
 		super(Component.translatable("screen.hologrammenu.hotkey_hub.title"));
@@ -85,15 +85,7 @@ public class HotkeyHubScreen extends Screen {
 		}).bounds(x, y, buttonWidth, buttonHeight).build());
 		y += buttonHeight + rowGap;
 
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.hotkey_hub.rpg_effects"), press ->
-			this.minecraft.setScreen(new RpgEffectsScreen(this))
-		).bounds(x, y, buttonWidth, buttonHeight).build());
-		y += buttonHeight + rowGap;
-
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.hotkey_hub.rpg_skills"), press ->
-			this.minecraft.setScreen(new RpgSkillsScreen(this))
-		).bounds(x, y, buttonWidth, buttonHeight).build());
-		y += buttonHeight + sectionGap;
+		y += sectionGap;
 
 		addRenderableWidget(Button.builder(Component.translatable("gui.done"), press -> onClose())
 			.bounds(x, y, buttonWidth, buttonHeight).build());
@@ -111,8 +103,6 @@ public class HotkeyHubScreen extends Screen {
 				toggleLabel("screen.hologrammenu.hotkey_hub.npc_edit", true),
 				toggleLabel("screen.hologrammenu.hotkey_hub.hologram_edit", true),
 				Component.translatable("screen.hologrammenu.item_styler.title"),
-				Component.translatable("screen.hologrammenu.hotkey_hub.rpg_effects"),
-				Component.translatable("screen.hologrammenu.hotkey_hub.rpg_skills"),
 				Component.translatable("gui.done")
 			)
 		);

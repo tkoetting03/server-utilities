@@ -19,19 +19,14 @@ import com.hologrammenu.head.HeadPresetService;
 import com.hologrammenu.itemstyler.ItemStylerSessions;
 import com.hologrammenu.npc.PlayerHeadHelper;
 import com.hologrammenu.anvil.AnvilLoreSession;
-import com.hologrammenu.rpg.RpgCustomEffectStore;
-import com.hologrammenu.rpg.RpgEffectCatalog;
 import com.hologrammenu.storage.StorageMenuItemLore;
 import com.hologrammenu.storage.StorageMenuPermissions;
 import com.hologrammenu.text.TextFormats;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Display;
@@ -41,11 +36,7 @@ import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.ItemEnchantments;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class NetworkHandler {
@@ -86,9 +77,6 @@ public final class NetworkHandler {
 			PayloadTypeRegistry.serverboundPlay().register(ModPackets.HeadPresetListRequestPayload.TYPE, ModPackets.HeadPresetListRequestPayload.CODEC);
 			PayloadTypeRegistry.clientboundPlay().register(ModPackets.HeadPresetListResponsePayload.TYPE, ModPackets.HeadPresetListResponsePayload.CODEC);
 			PayloadTypeRegistry.serverboundPlay().register(ModPackets.AnvilSetLorePayload.TYPE, ModPackets.AnvilSetLorePayload.CODEC);
-			PayloadTypeRegistry.serverboundPlay().register(ModPackets.AnvilApplyRpgEffectPayload.TYPE, ModPackets.AnvilApplyRpgEffectPayload.CODEC);
-			PayloadTypeRegistry.serverboundPlay().register(ModPackets.AnvilApplyCustomRpgEffectPayload.TYPE, ModPackets.AnvilApplyCustomRpgEffectPayload.CODEC);
-			PayloadTypeRegistry.serverboundPlay().register(ModPackets.AnvilApplyEnchantPayload.TYPE, ModPackets.AnvilApplyEnchantPayload.CODEC);
 			PayloadTypeRegistry.clientboundPlay().register(ModPackets.StorageMenuSyncPayload.TYPE, ModPackets.StorageMenuSyncPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.StorageMenuContextPayload.TYPE, ModPackets.StorageMenuContextPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ModPackets.StorageMenuNavigationStatePayload.TYPE, ModPackets.StorageMenuNavigationStatePayload.CODEC);
@@ -164,21 +152,6 @@ public final class NetworkHandler {
 			ServerPlayNetworking.registerGlobalReceiver(ModPackets.AnvilSetLorePayload.TYPE, (payload, context) -> {
 				ServerPlayer player = context.player();
 				context.server().execute(() -> handleAnvilSetLore(player, payload));
-			});
-
-			ServerPlayNetworking.registerGlobalReceiver(ModPackets.AnvilApplyRpgEffectPayload.TYPE, (payload, context) -> {
-				ServerPlayer player = context.player();
-				context.server().execute(() -> handleAnvilApplyRpgEffect(player, payload));
-			});
-
-			ServerPlayNetworking.registerGlobalReceiver(ModPackets.AnvilApplyCustomRpgEffectPayload.TYPE, (payload, context) -> {
-				ServerPlayer player = context.player();
-				context.server().execute(() -> handleAnvilApplyCustomRpgEffect(player, payload));
-			});
-
-			ServerPlayNetworking.registerGlobalReceiver(ModPackets.AnvilApplyEnchantPayload.TYPE, (payload, context) -> {
-				ServerPlayer player = context.player();
-				context.server().execute(() -> handleAnvilApplyEnchant(player, payload));
 			});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -346,195 +319,6 @@ public final class NetworkHandler {
 			}
 			return updated;
 		});
-	}
-
-	private static void handleAnvilApplyRpgEffect(ServerPlayer player, ModPackets.AnvilApplyRpgEffectPayload payload) {
-		if (!(player.containerMenu instanceof AnvilMenu menu)) {
-			applyRpgEffectToStyler(player, payload);
-			return;
-		}
-		ItemStack input = menu.getSlot(0).getItem();
-		if (input.isEmpty()) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.effects_no_item"));
-			return;
-		}
-
-		RpgEffectCatalog.Entry effect = RpgEffectCatalog.byId(payload.effectId());
-		List<String> lines = new ArrayList<>();
-		for (String line : StorageMenuItemLore.readLoreLines(input)) {
-			if (!RpgEffectCatalog.isEffectLoreFor(line, effect)) {
-				lines.add(line);
-			}
-		}
-		if (!payload.remove()) {
-			while (lines.size() >= StorageMenuItemLore.MAX_LINES) {
-				lines.remove(lines.size() - 1);
-			}
-			lines.add(effect.loreLine(payload.level()));
-		}
-
-		replaceAnvilInput(menu, StorageMenuItemLore.withLore(input, lines));
-		player.sendSystemMessage(Component.translatable(
-			payload.remove()
-				? "screen.hologrammenu.anvil.effects_removed"
-				: "screen.hologrammenu.anvil.effects_applied",
-			effect.name()
-		));
-	}
-
-	private static void applyRpgEffectToStyler(ServerPlayer player, ModPackets.AnvilApplyRpgEffectPayload payload) {
-		RpgEffectCatalog.Entry effect = RpgEffectCatalog.byId(payload.effectId());
-		if (!ItemStylerSessions.update(player, input -> {
-			List<String> lines = new ArrayList<>();
-			for (String line : StorageMenuItemLore.readLoreLines(input)) {
-				if (!RpgEffectCatalog.isEffectLoreFor(line, effect)) {
-					lines.add(line);
-				}
-			}
-			if (!payload.remove()) {
-				while (lines.size() >= StorageMenuItemLore.MAX_LINES) {
-					lines.remove(lines.size() - 1);
-				}
-				lines.add(effect.loreLine(payload.level()));
-			}
-			return StorageMenuItemLore.withLore(input, lines);
-		})) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.effects_no_item"));
-		}
-	}
-
-	private static void handleAnvilApplyCustomRpgEffect(ServerPlayer player, ModPackets.AnvilApplyCustomRpgEffectPayload payload) {
-		if (!(player.containerMenu instanceof AnvilMenu menu)) {
-			applyCustomRpgEffectToStyler(player, payload);
-			return;
-		}
-		ItemStack input = menu.getSlot(0).getItem();
-		if (input.isEmpty()) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.effects_no_item"));
-			return;
-		}
-
-		String effectName = payload.effectName() == null || payload.effectName().isBlank()
-			? "Custom Effect"
-			: payload.effectName().trim();
-		List<String> lines = new ArrayList<>();
-		for (String line : StorageMenuItemLore.readLoreLines(input)) {
-			if (!RpgCustomEffectStore.isEffectLoreFor(line, effectName)) {
-				lines.add(line);
-			}
-		}
-		if (!payload.remove()) {
-			while (lines.size() >= StorageMenuItemLore.MAX_LINES) {
-				lines.remove(lines.size() - 1);
-			}
-			lines.add(payload.loreLine());
-		}
-
-		replaceAnvilInput(menu, StorageMenuItemLore.withLore(input, lines));
-		player.sendSystemMessage(Component.translatable(
-			payload.remove()
-				? "screen.hologrammenu.anvil.effects_removed"
-				: "screen.hologrammenu.anvil.effects_applied",
-			effectName
-		));
-	}
-
-	private static void applyCustomRpgEffectToStyler(ServerPlayer player, ModPackets.AnvilApplyCustomRpgEffectPayload payload) {
-		String effectName = payload.effectName() == null || payload.effectName().isBlank()
-			? "Custom Effect"
-			: payload.effectName().trim();
-		if (!ItemStylerSessions.update(player, input -> {
-			List<String> lines = new ArrayList<>();
-			for (String line : StorageMenuItemLore.readLoreLines(input)) {
-				if (!RpgCustomEffectStore.isEffectLoreFor(line, effectName)) {
-					lines.add(line);
-				}
-			}
-			if (!payload.remove()) {
-				while (lines.size() >= StorageMenuItemLore.MAX_LINES) {
-					lines.remove(lines.size() - 1);
-				}
-				lines.add(payload.loreLine());
-			}
-			return StorageMenuItemLore.withLore(input, lines);
-		})) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.effects_no_item"));
-		}
-	}
-
-	private static void handleAnvilApplyEnchant(ServerPlayer player, ModPackets.AnvilApplyEnchantPayload payload) {
-		if (!(player.containerMenu instanceof AnvilMenu menu)) {
-			applyEnchantToStyler(player, payload);
-			return;
-		}
-		ItemStack input = menu.getSlot(0).getItem();
-		if (input.isEmpty()) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.effects_no_item"));
-			return;
-		}
-
-		Identifier id = Identifier.tryParse(payload.enchantmentId());
-		if (id == null) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.enchant_invalid"));
-			return;
-		}
-		java.util.Optional<Holder.Reference<Enchantment>> holder = player.level().getServer().registryAccess()
-			.lookupOrThrow(Registries.ENCHANTMENT)
-			.get(id);
-		if (holder.isEmpty()) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.enchant_invalid"));
-			return;
-		}
-
-		boolean stored = input.getItem() == Items.ENCHANTED_BOOK;
-		var component = stored ? DataComponents.STORED_ENCHANTMENTS : DataComponents.ENCHANTMENTS;
-		ItemEnchantments existing = input.getOrDefault(component, ItemEnchantments.EMPTY);
-		ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(existing);
-		if (payload.remove()) {
-			mutable.removeIf(enchantment -> enchantment.is(id));
-		} else {
-			mutable.set(holder.get(), Math.max(1, Math.min(255, payload.level())));
-		}
-		ItemStack updated = input.copy();
-		updated.set(component, mutable.toImmutable());
-		replaceAnvilInput(menu, updated);
-		player.sendSystemMessage(Component.translatable(
-			payload.remove()
-				? "screen.hologrammenu.anvil.enchant_removed"
-				: "screen.hologrammenu.anvil.enchant_applied",
-			id.toString()
-		));
-	}
-
-	private static void applyEnchantToStyler(ServerPlayer player, ModPackets.AnvilApplyEnchantPayload payload) {
-		Identifier id = Identifier.tryParse(payload.enchantmentId());
-		if (id == null) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.enchant_invalid"));
-			return;
-		}
-		java.util.Optional<Holder.Reference<Enchantment>> holder = player.level().getServer().registryAccess()
-			.lookupOrThrow(Registries.ENCHANTMENT)
-			.get(id);
-		if (holder.isEmpty()) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.enchant_invalid"));
-			return;
-		}
-		if (!ItemStylerSessions.update(player, input -> {
-			boolean stored = input.getItem() == Items.ENCHANTED_BOOK;
-			var component = stored ? DataComponents.STORED_ENCHANTMENTS : DataComponents.ENCHANTMENTS;
-			ItemEnchantments existing = input.getOrDefault(component, ItemEnchantments.EMPTY);
-			ItemEnchantments.Mutable mutable = new ItemEnchantments.Mutable(existing);
-			if (payload.remove()) {
-				mutable.removeIf(enchantment -> enchantment.is(id));
-			} else {
-				mutable.set(holder.get(), Math.max(1, Math.min(255, payload.level())));
-			}
-			ItemStack updated = input.copy();
-			updated.set(component, mutable.toImmutable());
-			return updated;
-		})) {
-			player.sendSystemMessage(Component.translatable("screen.hologrammenu.anvil.effects_no_item"));
-		}
 	}
 
 	private static void replaceAnvilInput(AnvilMenu menu, ItemStack stack) {

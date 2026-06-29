@@ -92,40 +92,4 @@ public final class AnvilEditorMetrics {
 		return height + buttonHeight;
 	}
 
-	public static int effectsGridTop() {
-		return tabContentTop() + ModPanelLayout.SECTION_LABEL_GAP + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.ROW_GAP;
-	}
-
-	public static int effectsLevelRowTop() {
-		int rows = 4;
-		return effectsGridTop() + rows * UiLayoutHelper.defaultButtonHeight() + rows * ModPanelLayout.ROW_GAP + ModPanelLayout.SECTION_GAP;
-	}
-
-	public static int effectsPageRowTop() {
-		return effectsLevelRowTop();
-	}
-
-	public static int effectsEnchantLevelRowTop() {
-		return effectsPageRowTop() + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.ROW_GAP;
-	}
-
-	public static int effectsEnchantActionRowTop() {
-		return effectsEnchantLevelRowTop() + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.ROW_GAP;
-	}
-
-	public static int effectsEnchantFooterTop() {
-		return effectsEnchantActionRowTop() + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.SECTION_GAP;
-	}
-
-	public static int effectsActionRowTop() {
-		return effectsLevelRowTop() + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.ROW_GAP;
-	}
-
-	public static int effectsFooterTop() {
-		return effectsActionRowTop() + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.SECTION_GAP;
-	}
-
-	public static int effectsPanelHeight() {
-		return effectsEnchantFooterTop() + UiLayoutHelper.defaultButtonHeight() + ModPanelLayout.PANEL_PADDING;
-	}
 }

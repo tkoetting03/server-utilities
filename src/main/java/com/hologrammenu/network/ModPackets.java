@@ -612,63 +612,6 @@ public final class ModPackets {
 		}
 	}
 
-	public record AnvilApplyRpgEffectPayload(String effectId, int level, boolean remove) implements CustomPacketPayload {
-		public static final CustomPacketPayload.Type<AnvilApplyRpgEffectPayload> TYPE =
-			new CustomPacketPayload.Type<>(HologramMenuMod.id("anvil_apply_rpg_effect"));
-		public static final StreamCodec<RegistryFriendlyByteBuf, AnvilApplyRpgEffectPayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.STRING_UTF8,
-			AnvilApplyRpgEffectPayload::effectId,
-			ByteBufCodecs.VAR_INT,
-			AnvilApplyRpgEffectPayload::level,
-			ByteBufCodecs.BOOL,
-			AnvilApplyRpgEffectPayload::remove,
-			AnvilApplyRpgEffectPayload::new
-		);
-
-		@Override
-		public Type<? extends CustomPacketPayload> type() {
-			return TYPE;
-		}
-	}
-
-	public record AnvilApplyCustomRpgEffectPayload(String effectName, String loreLine, boolean remove) implements CustomPacketPayload {
-		public static final CustomPacketPayload.Type<AnvilApplyCustomRpgEffectPayload> TYPE =
-			new CustomPacketPayload.Type<>(HologramMenuMod.id("anvil_apply_custom_rpg_effect"));
-		public static final StreamCodec<RegistryFriendlyByteBuf, AnvilApplyCustomRpgEffectPayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.STRING_UTF8,
-			AnvilApplyCustomRpgEffectPayload::effectName,
-			ByteBufCodecs.STRING_UTF8,
-			AnvilApplyCustomRpgEffectPayload::loreLine,
-			ByteBufCodecs.BOOL,
-			AnvilApplyCustomRpgEffectPayload::remove,
-			AnvilApplyCustomRpgEffectPayload::new
-		);
-
-		@Override
-		public Type<? extends CustomPacketPayload> type() {
-			return TYPE;
-		}
-	}
-
-	public record AnvilApplyEnchantPayload(String enchantmentId, int level, boolean remove) implements CustomPacketPayload {
-		public static final CustomPacketPayload.Type<AnvilApplyEnchantPayload> TYPE =
-			new CustomPacketPayload.Type<>(HologramMenuMod.id("anvil_apply_enchant"));
-		public static final StreamCodec<RegistryFriendlyByteBuf, AnvilApplyEnchantPayload> CODEC = StreamCodec.composite(
-			ByteBufCodecs.STRING_UTF8,
-			AnvilApplyEnchantPayload::enchantmentId,
-			ByteBufCodecs.VAR_INT,
-			AnvilApplyEnchantPayload::level,
-			ByteBufCodecs.BOOL,
-			AnvilApplyEnchantPayload::remove,
-			AnvilApplyEnchantPayload::new
-		);
-
-		@Override
-		public Type<? extends CustomPacketPayload> type() {
-			return TYPE;
-		}
-	}
-
 	private ModPackets() {
 	}
 }

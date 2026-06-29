@@ -20,8 +20,6 @@ import com.hologrammenu.client.screen.widget.VanillaIconButton;
 import com.hologrammenu.client.screen.widget.AnvilEditorMetrics;
 import com.hologrammenu.client.screen.widget.AnvilEditorPanelWidget;
 import com.hologrammenu.network.ModPackets;
-import com.hologrammenu.rpg.RpgCustomEffectStore;
-import com.hologrammenu.rpg.RpgEffectCatalog;
 import com.hologrammenu.storage.StorageMenuItemLore;
 import com.hologrammenu.text.StyledSpan;
 import com.hologrammenu.text.StyledText;
@@ -73,7 +71,6 @@ public final class TextStyleOverlay {
 	private final TextStyleTarget target;
 	private final Supplier<int[]> panelPositionSupplier;
 	private final Supplier<ItemStack> anvilStackSupplier;
-	private final EditorEffectsMode effectsMode;
 	private final ScreenInvoker screenInvoker;
 	private final List<GuiEventListener> widgets = new ArrayList<>();
 	private final List<TextPart> parts = new ArrayList<>();
@@ -112,85 +109,6 @@ public final class TextStyleOverlay {
 	private final EnumSet<StyledText.Effect> loreParagraphEffects = EnumSet.noneOf(StyledText.Effect.class);
 	private Button anvilStyleTabButton;
 	private Button anvilLoreTabButton;
-	private Button anvilEffectsTabButton;
-	private final Map<String, Button> rpgEffectButtons = new java.util.HashMap<>();
-	private final Map<String, Button> vanillaEnchantButtons = new java.util.HashMap<>();
-	private String selectedRpgEffectId = RpgEffectCatalog.first().id();
-	private int selectedRpgEffectLevel = RpgEffectCatalog.MIN_LEVEL;
-	private EffectsSubTab effectsSubTab = EffectsSubTab.RPG;
-	private String selectedVanillaEnchantId = "minecraft:protection";
-	private int selectedVanillaEnchantLevel = 1;
-	private int vanillaEnchantPage;
-	private EditBox vanillaEnchantLevelField;
-	private int swordCritChance = 10;
-	private int swordCooldownReduction = 0;
-	private int swordLifeSteal = 0;
-	private int swordBleedChance = 0;
-	private int swordArmorPierce = 0;
-	private int swordExecuteDamage = 0;
-	private int armorHealthBonus = 0;
-	private int armorDefenseBonus = 0;
-	private int armorRegenBonus = 0;
-
-	private static final int ENCHANTS_PER_PAGE = 8;
-	private static final SwordAspect[] SWORD_ASPECTS = {
-		new SwordAspect("Critical Chance", "&e", "+%s%% Crit", 0, 100, 5),
-		new SwordAspect("Cooldown", "&b", "-%ss Cooldown", 0, 40, 2),
-		new SwordAspect("Parasitic Regen", "&4", "%s%% Life Steal", 0, 50, 5),
-		new SwordAspect("Bleed Chance", "&c", "%s%% Bleed", 0, 100, 5),
-		new SwordAspect("Armor Pierce", "&6", "%s%% Pierce", 0, 75, 5),
-		new SwordAspect("Execute Damage", "&d", "+%s%% Execute", 0, 100, 5)
-	};
-	private static final ArmorAspect[] ARMOR_ASPECTS = {
-		new ArmorAspect("Max Health", "&c", "+%s Health", 0, 40, 2),
-		new ArmorAspect("Armor Defense", "&9", "+%s Defense", 0, 100, 5),
-		new ArmorAspect("Health Regen", "&a", "+%s Regen", 0, 50, 5)
-	};
-	private static final List<VanillaEnchantOption> VANILLA_ENCHANTS = List.of(
-		new VanillaEnchantOption("minecraft:protection", "Protection"),
-		new VanillaEnchantOption("minecraft:fire_protection", "Fire Prot"),
-		new VanillaEnchantOption("minecraft:feather_falling", "Feather Fall"),
-		new VanillaEnchantOption("minecraft:blast_protection", "Blast Prot"),
-		new VanillaEnchantOption("minecraft:projectile_protection", "Proj Prot"),
-		new VanillaEnchantOption("minecraft:respiration", "Respiration"),
-		new VanillaEnchantOption("minecraft:aqua_affinity", "Aqua Affinity"),
-		new VanillaEnchantOption("minecraft:thorns", "Thorns"),
-		new VanillaEnchantOption("minecraft:depth_strider", "Depth Strider"),
-		new VanillaEnchantOption("minecraft:frost_walker", "Frost Walker"),
-		new VanillaEnchantOption("minecraft:binding_curse", "Binding"),
-		new VanillaEnchantOption("minecraft:soul_speed", "Soul Speed"),
-		new VanillaEnchantOption("minecraft:swift_sneak", "Swift Sneak"),
-		new VanillaEnchantOption("minecraft:sharpness", "Sharpness"),
-		new VanillaEnchantOption("minecraft:smite", "Smite"),
-		new VanillaEnchantOption("minecraft:bane_of_arthropods", "Bane"),
-		new VanillaEnchantOption("minecraft:knockback", "Knockback"),
-		new VanillaEnchantOption("minecraft:fire_aspect", "Fire Aspect"),
-		new VanillaEnchantOption("minecraft:looting", "Looting"),
-		new VanillaEnchantOption("minecraft:sweeping_edge", "Sweeping"),
-		new VanillaEnchantOption("minecraft:efficiency", "Efficiency"),
-		new VanillaEnchantOption("minecraft:silk_touch", "Silk Touch"),
-		new VanillaEnchantOption("minecraft:unbreaking", "Unbreaking"),
-		new VanillaEnchantOption("minecraft:fortune", "Fortune"),
-		new VanillaEnchantOption("minecraft:power", "Power"),
-		new VanillaEnchantOption("minecraft:punch", "Punch"),
-		new VanillaEnchantOption("minecraft:flame", "Flame"),
-		new VanillaEnchantOption("minecraft:infinity", "Infinity"),
-		new VanillaEnchantOption("minecraft:luck_of_the_sea", "Sea Luck"),
-		new VanillaEnchantOption("minecraft:lure", "Lure"),
-		new VanillaEnchantOption("minecraft:loyalty", "Loyalty"),
-		new VanillaEnchantOption("minecraft:impaling", "Impaling"),
-		new VanillaEnchantOption("minecraft:riptide", "Riptide"),
-		new VanillaEnchantOption("minecraft:channeling", "Channeling"),
-		new VanillaEnchantOption("minecraft:multishot", "Multishot"),
-		new VanillaEnchantOption("minecraft:quick_charge", "Quick Charge"),
-		new VanillaEnchantOption("minecraft:piercing", "Piercing"),
-		new VanillaEnchantOption("minecraft:density", "Density"),
-		new VanillaEnchantOption("minecraft:breach", "Breach"),
-		new VanillaEnchantOption("minecraft:wind_burst", "Wind Burst"),
-		new VanillaEnchantOption("minecraft:lunge", "Lunge"),
-		new VanillaEnchantOption("minecraft:mending", "Mending"),
-		new VanillaEnchantOption("minecraft:vanishing_curse", "Vanishing")
-	);
 
 	public TextStyleOverlay(
 		Screen parent,
@@ -198,7 +116,7 @@ public final class TextStyleOverlay {
 		TextStyleTarget target,
 		Supplier<int[]> panelPositionSupplier
 	) {
-		this(parent, plainTextSupplier, target, panelPositionSupplier, null, EditorEffectsMode.NONE);
+		this(parent, plainTextSupplier, target, panelPositionSupplier, null);
 	}
 
 	public static TextStyleOverlay forAnvil(
@@ -208,7 +126,7 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> stackSupplier
 	) {
-		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, EditorEffectsMode.ALL);
+		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier);
 	}
 
 	public static TextStyleOverlay forItemStyler(
@@ -218,7 +136,7 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> stackSupplier
 	) {
-		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, EditorEffectsMode.ENCHANTS_ONLY);
+		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier);
 	}
 
 	public TextStyleOverlay(
@@ -228,23 +146,11 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> anvilStackSupplier
 	) {
-		this(parent, plainTextSupplier, target, panelPositionSupplier, anvilStackSupplier, anvilStackSupplier != null ? EditorEffectsMode.ALL : EditorEffectsMode.NONE);
-	}
-
-	private TextStyleOverlay(
-		Screen parent,
-		Supplier<String> plainTextSupplier,
-		TextStyleTarget target,
-		Supplier<int[]> panelPositionSupplier,
-		Supplier<ItemStack> anvilStackSupplier,
-		EditorEffectsMode effectsMode
-	) {
 		this.parent = parent;
 		this.plainTextSupplier = plainTextSupplier;
 		this.target = target;
 		this.panelPositionSupplier = panelPositionSupplier;
 		this.anvilStackSupplier = anvilStackSupplier;
-		this.effectsMode = effectsMode;
 		this.screenInvoker = (ScreenInvoker) parent;
 	}
 
@@ -353,7 +259,7 @@ public final class TextStyleOverlay {
 		}
 
 		if (isAnvilMode()) {
-			anvilActiveTab = restoredTab == AnvilEditorTab.EFFECTS && effectsMode == EditorEffectsMode.NONE ? AnvilEditorTab.STYLE : restoredTab;
+			anvilActiveTab = restoredTab;
 			anvilStyleFocus = AnvilStyleFocus.RENAME;
 		}
 		draft = savedDraft.withText(stylePlainTextSupplier().get());
@@ -447,10 +353,8 @@ public final class TextStyleOverlay {
 			attachAnvilTabs(panelX, panelY);
 			if (anvilActiveTab == AnvilEditorTab.STYLE) {
 				buildStyleWidgets(panelX, panelY, AnvilEditorMetrics.tabRowHeight(), partCount);
-			} else if (anvilActiveTab == AnvilEditorTab.LORE) {
-				buildLoreWidgets(panelX, panelY, lineCount);
 			} else {
-					buildEffectsWidgets(panelX, panelY);
+				buildLoreWidgets(panelX, panelY, lineCount);
 			}
 		} else {
 			var panelWidget = new TextStylePanelWidget(panelX, panelY, partCount, 0, colorEditMode == ColorEditMode.GRADIENT);
@@ -472,8 +376,6 @@ public final class TextStyleOverlay {
 			refreshSelectionOutlines();
 		} else if (anvilActiveTab == AnvilEditorTab.LORE) {
 			refreshLoreSelectionOutlines();
-		} else {
-			refreshRpgEffectSelectionOutlines();
 		}
 		updateAnvilTabSelection();
 	}
@@ -784,8 +686,7 @@ public final class TextStyleOverlay {
 		int tabY = panelY + ModPanelLayout.CONTENT_TOP;
 		int tabGap = ModPanelLayout.ROW_GAP;
 		int tabHeight = AnvilEditorMetrics.tabButtonHeight();
-		int tabCount = effectsMode == EditorEffectsMode.NONE ? 2 : 3;
-		int tabWidth = ModPanelLayout.columnWidth(contentWidth, tabCount, tabGap);
+		int tabWidth = ModPanelLayout.columnWidth(contentWidth, 2, tabGap);
 		anvilStyleTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.tab.style"), press -> {
 				switchAnvilTab(AnvilEditorTab.STYLE);
 				releaseButtonFocus(press);
@@ -800,27 +701,10 @@ public final class TextStyleOverlay {
 			.build();
 		attach(anvilStyleTabButton);
 		attach(anvilLoreTabButton);
-		if (effectsMode != EditorEffectsMode.NONE) {
-			String labelKey = effectsMode == EditorEffectsMode.ENCHANTS_ONLY
-				? "screen.hologrammenu.anvil.effects_tab.enchants"
-				: "screen.hologrammenu.anvil.tab.effects";
-			anvilEffectsTabButton = Button.builder(Component.translatable(labelKey), press -> {
-					switchAnvilTab(AnvilEditorTab.EFFECTS);
-					releaseButtonFocus(press);
-				})
-				.bounds(left + (tabWidth + tabGap) * 2, tabY, tabWidth, tabHeight)
-				.build();
-			attach(anvilEffectsTabButton);
-		} else {
-			anvilEffectsTabButton = null;
-		}
 	}
 
 	private void switchAnvilTab(AnvilEditorTab tab) {
 		if (!isAnvilMode() || anvilActiveTab == tab) {
-			return;
-		}
-		if (tab == AnvilEditorTab.EFFECTS && effectsMode == EditorEffectsMode.NONE) {
 			return;
 		}
 		if (anvilActiveTab == AnvilEditorTab.STYLE) {
@@ -834,12 +718,10 @@ public final class TextStyleOverlay {
 			syncLoreLinesFromFields();
 			applyLore();
 		}
-		if (tab == AnvilEditorTab.LORE || tab == AnvilEditorTab.EFFECTS) {
+		if (tab == AnvilEditorTab.LORE) {
 			ItemStack stack = anvilStackSupplier.get();
 			if (stack.isEmpty()) {
-				showAnvilMessage(Component.translatable(tab == AnvilEditorTab.LORE
-					? "screen.hologrammenu.anvil.lore_no_item"
-					: "screen.hologrammenu.anvil.effects_no_item"));
+				showAnvilMessage(Component.translatable("screen.hologrammenu.anvil.lore_no_item"));
 				return;
 			}
 			if (loreLines.isEmpty()) {
@@ -861,17 +743,9 @@ public final class TextStyleOverlay {
 		}
 		ModUiSelectionState.unmarkSelected(anvilStyleTabButton);
 		ModUiSelectionState.unmarkSelected(anvilLoreTabButton);
-		if (anvilEffectsTabButton != null) {
-			ModUiSelectionState.unmarkSelected(anvilEffectsTabButton);
-		}
 		switch (anvilActiveTab) {
 			case STYLE -> ModUiSelectionState.markSelected(anvilStyleTabButton);
 			case LORE -> ModUiSelectionState.markSelected(anvilLoreTabButton);
-			case EFFECTS -> {
-				if (anvilEffectsTabButton != null) {
-					ModUiSelectionState.markSelected(anvilEffectsTabButton);
-				}
-			}
 		}
 	}
 
@@ -1267,24 +1141,6 @@ public final class TextStyleOverlay {
 	}
 
 	private boolean isGeneratedEffectLoreLine(String line) {
-		if (RpgEffectCatalog.isEffectLore(line)) {
-			return true;
-		}
-		for (RpgCustomEffectStore.CustomEffect effect : RpgCustomEffectStore.effects()) {
-			if (RpgCustomEffectStore.isEffectLoreFor(line, effect.name())) {
-				return true;
-			}
-		}
-		for (SwordAspect aspect : SWORD_ASPECTS) {
-			if (RpgCustomEffectStore.isEffectLoreFor(line, aspect.name())) {
-				return true;
-			}
-		}
-		for (ArmorAspect aspect : ARMOR_ASPECTS) {
-			if (RpgCustomEffectStore.isEffectLoreFor(line, aspect.name())) {
-				return true;
-			}
-		}
 		return false;
 	}
 
@@ -1491,621 +1347,6 @@ public final class TextStyleOverlay {
 		selectedLoreLineIndex = 0;
 		relayout();
 		ClientPlayNetworking.send(new ModPackets.AnvilSetLorePayload(List.of()));
-	}
-
-	private void buildEffectsWidgets(int panelX, int panelY) {
-		if (effectsMode == EditorEffectsMode.ENCHANTS_ONLY) {
-			effectsSubTab = EffectsSubTab.ENCHANTS;
-			buildVanillaEnchantWidgets(panelX, panelY);
-			return;
-		}
-		int left = panelX + ModPanelLayout.PANEL_PADDING;
-		int contentWidth = ModPanelLayout.CONTENT_WIDTH;
-		int buttonH = UiLayoutHelper.defaultButtonHeight();
-		int rowGap = ModPanelLayout.ROW_GAP;
-		int subTabWidth = ModPanelLayout.columnWidth(contentWidth, 4, rowGap);
-		int subTabY = panelY + AnvilEditorMetrics.tabContentTop() + ModPanelLayout.SECTION_LABEL_GAP;
-		Button rpgTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_tab.rpg"), press -> {
-				effectsSubTab = EffectsSubTab.RPG;
-				relayout();
-			})
-			.bounds(left, subTabY, subTabWidth, buttonH)
-			.build();
-		Button enchantTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_tab.enchants"), press -> {
-				effectsSubTab = EffectsSubTab.ENCHANTS;
-				relayout();
-			})
-			.bounds(left + subTabWidth + rowGap, subTabY, subTabWidth, buttonH)
-			.build();
-		Button swordTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_tab.sword"), press -> {
-				effectsSubTab = EffectsSubTab.SWORD;
-				relayout();
-			})
-			.bounds(left + (subTabWidth + rowGap) * 2, subTabY, subTabWidth, buttonH)
-			.build();
-		Button armorTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_tab.armor"), press -> {
-				effectsSubTab = EffectsSubTab.ARMOR;
-				relayout();
-			})
-			.bounds(left + (subTabWidth + rowGap) * 3, subTabY, subTabWidth, buttonH)
-			.build();
-		attach(rpgTabButton);
-		attach(enchantTabButton);
-		attach(swordTabButton);
-		attach(armorTabButton);
-		if (effectsSubTab == EffectsSubTab.RPG) {
-			markSelectionWidget(rpgTabButton);
-			buildRpgEffectWidgets(panelX, panelY);
-		} else if (effectsSubTab == EffectsSubTab.ENCHANTS) {
-			markSelectionWidget(enchantTabButton);
-			buildVanillaEnchantWidgets(panelX, panelY);
-		} else if (effectsSubTab == EffectsSubTab.SWORD) {
-			markSelectionWidget(swordTabButton);
-			buildSwordAspectWidgets(panelX, panelY);
-		} else {
-			markSelectionWidget(armorTabButton);
-			buildArmorAspectWidgets(panelX, panelY);
-		}
-	}
-
-	private void buildRpgEffectWidgets(int panelX, int panelY) {
-		int left = panelX + ModPanelLayout.PANEL_PADDING;
-		int contentWidth = ModPanelLayout.CONTENT_WIDTH;
-		int buttonH = UiLayoutHelper.defaultButtonHeight();
-		int rowGap = ModPanelLayout.ROW_GAP;
-		int half = ModPanelLayout.columnWidth(contentWidth, 2, rowGap);
-		int y = panelY + AnvilEditorMetrics.effectsGridTop();
-
-		rpgEffectButtons.clear();
-		List<RpgEffectOption> effects = rpgEffectOptions();
-		for (int index = 0; index < effects.size(); index++) {
-			RpgEffectOption effect = effects.get(index);
-			int col = index % 2;
-			int row = index / 2;
-			Button button = iconButton(
-				left + col * (half + rowGap),
-				y + row * (buttonH + rowGap),
-				half,
-				buttonH,
-				Component.literal(effect.name()),
-				new ItemStack(Items.EXPERIENCE_BOTTLE),
-				press -> {
-					selectedRpgEffectId = effect.id();
-					refreshRpgEffectSelectionOutlines();
-					releaseButtonFocus(press);
-				});
-			rpgEffectButtons.put(effect.id(), button);
-			attach(button);
-		}
-
-		int levelY = panelY + AnvilEditorMetrics.effectsLevelRowTop();
-		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
-		attach(Button.builder(Component.literal("-"), press -> {
-			selectedRpgEffectLevel = clampSelectedRpgLevel(selectedRpgEffectLevel - 1);
-			relayout();
-		}).bounds(left, levelY, third, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.level", selectedRpgEffectLevel), press -> {
-			selectedRpgEffectLevel = clampSelectedRpgLevel(selectedRpgEffectLevel + 1);
-			relayout();
-		}).bounds(left + third + rowGap, levelY, third, buttonH).build());
-		attach(Button.builder(Component.literal("+"), press -> {
-			selectedRpgEffectLevel = clampSelectedRpgLevel(selectedRpgEffectLevel + 1);
-			relayout();
-		}).bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
-
-		int actionY = panelY + AnvilEditorMetrics.effectsActionRowTop();
-		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applySelectedRpgEffect()));
-		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeSelectedRpgEffect()));
-
-		int footerY = panelY + AnvilEditorMetrics.effectsFooterTop();
-		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
-		refreshRpgEffectSelectionOutlines();
-	}
-
-	private void buildVanillaEnchantWidgets(int panelX, int panelY) {
-		int left = panelX + ModPanelLayout.PANEL_PADDING;
-		int contentWidth = ModPanelLayout.CONTENT_WIDTH;
-		int buttonH = UiLayoutHelper.defaultButtonHeight();
-		int rowGap = ModPanelLayout.ROW_GAP;
-		int half = ModPanelLayout.columnWidth(contentWidth, 2, rowGap);
-		int y = panelY + AnvilEditorMetrics.effectsGridTop();
-		vanillaEnchantButtons.clear();
-		int maxPage = maxVanillaEnchantPage();
-		vanillaEnchantPage = Math.max(0, Math.min(maxPage, vanillaEnchantPage));
-		int start = vanillaEnchantPage * ENCHANTS_PER_PAGE;
-		int end = Math.min(VANILLA_ENCHANTS.size(), start + ENCHANTS_PER_PAGE);
-		for (int index = start; index < end; index++) {
-			VanillaEnchantOption option = VANILLA_ENCHANTS.get(index);
-			int local = index - start;
-			int col = local % 2;
-			int row = local / 2;
-			Button button = iconButton(left + col * (half + rowGap), y + row * (buttonH + rowGap), half, buttonH, Component.literal(option.label()), new ItemStack(Items.ENCHANTED_BOOK), press -> {
-				selectedVanillaEnchantId = option.id();
-				refreshVanillaEnchantSelectionOutlines();
-				releaseButtonFocus(press);
-			});
-			vanillaEnchantButtons.put(option.id(), button);
-			attach(button);
-		}
-
-		int pageY = panelY + AnvilEditorMetrics.effectsPageRowTop();
-		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
-		attach(Button.builder(Component.literal("<"), press -> {
-			vanillaEnchantPage = Math.max(0, vanillaEnchantPage - 1);
-			relayout();
-		}).bounds(left, pageY, third, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.enchant_page", vanillaEnchantPage + 1, maxPage + 1), press -> {
-			vanillaEnchantPage = vanillaEnchantPage >= maxPage ? 0 : vanillaEnchantPage + 1;
-			relayout();
-		}).bounds(left + third + rowGap, pageY, third, buttonH).build());
-		attach(Button.builder(Component.literal(">"), press -> {
-			vanillaEnchantPage = Math.min(maxPage, vanillaEnchantPage + 1);
-			relayout();
-		}).bounds(left + (third + rowGap) * 2, pageY, third, buttonH).build());
-
-		int levelY = panelY + AnvilEditorMetrics.effectsEnchantLevelRowTop();
-		attach(Button.builder(Component.literal("-"), press -> adjustVanillaEnchantLevel(-1))
-			.bounds(left, levelY, third, buttonH).build());
-		vanillaEnchantLevelField = new EditBox(
-			Minecraft.getInstance().font,
-			left + third + rowGap,
-			levelY,
-			third,
-			buttonH,
-			Component.translatable("screen.hologrammenu.rpg_effects.level", selectedVanillaEnchantLevel)
-		);
-		vanillaEnchantLevelField.setMaxLength(3);
-		vanillaEnchantLevelField.setValue(Integer.toString(selectedVanillaEnchantLevel));
-		vanillaEnchantLevelField.setResponder(value -> selectedVanillaEnchantLevel = parseEnchantLevel(value));
-		attach(vanillaEnchantLevelField);
-		attach(Button.builder(Component.literal("+"), press -> adjustVanillaEnchantLevel(1))
-			.bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
-
-		int actionY = panelY + AnvilEditorMetrics.effectsEnchantActionRowTop();
-		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applySelectedVanillaEnchant()));
-		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeSelectedVanillaEnchant()));
-
-		int footerY = panelY + AnvilEditorMetrics.effectsEnchantFooterTop();
-		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
-		refreshVanillaEnchantSelectionOutlines();
-	}
-
-	private void buildSwordAspectWidgets(int panelX, int panelY) {
-		int left = panelX + ModPanelLayout.PANEL_PADDING;
-		int contentWidth = ModPanelLayout.CONTENT_WIDTH;
-		int buttonH = UiLayoutHelper.defaultButtonHeight();
-		int rowGap = ModPanelLayout.ROW_GAP;
-		int half = ModPanelLayout.columnWidth(contentWidth, 2, rowGap);
-		int y = panelY + AnvilEditorMetrics.effectsGridTop();
-		for (int index = 0; index < SWORD_ASPECTS.length; index++) {
-			SwordAspect aspect = SWORD_ASPECTS[index];
-			int col = index % 2;
-			int row = index / 2;
-			attach(iconButton(
-				left + col * (half + rowGap),
-				y + row * (buttonH + rowGap),
-				half,
-				buttonH,
-				Component.literal(aspect.name() + ": " + aspectValueLabel(aspect)),
-				new ItemStack(Items.IRON_SWORD),
-				press -> {
-					adjustSwordAspect(aspect, aspect.step());
-					relayout();
-				}));
-		}
-
-		int levelY = panelY + AnvilEditorMetrics.effectsLevelRowTop();
-		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
-		attach(iconButton(left, levelY, third, buttonH, Component.translatable("screen.hologrammenu.anvil.sword_aspects_reset"), new ItemStack(Items.BARRIER), press -> {
-			resetSwordAspects();
-			relayout();
-		}));
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.sword_aspects_minus"), press -> {
-			adjustAllSwordAspects(-5);
-			relayout();
-		}).bounds(left + third + rowGap, levelY, third, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.sword_aspects_plus"), press -> {
-			adjustAllSwordAspects(5);
-			relayout();
-		}).bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
-
-		int actionY = panelY + AnvilEditorMetrics.effectsActionRowTop();
-		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applySwordAspects()));
-		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeSwordAspects()));
-
-		int footerY = panelY + AnvilEditorMetrics.effectsFooterTop();
-		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
-	}
-
-	private void buildArmorAspectWidgets(int panelX, int panelY) {
-		int left = panelX + ModPanelLayout.PANEL_PADDING;
-		int contentWidth = ModPanelLayout.CONTENT_WIDTH;
-		int buttonH = UiLayoutHelper.defaultButtonHeight();
-		int rowGap = ModPanelLayout.ROW_GAP;
-		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
-		int y = panelY + AnvilEditorMetrics.effectsGridTop();
-		for (int index = 0; index < ARMOR_ASPECTS.length; index++) {
-			ArmorAspect aspect = ARMOR_ASPECTS[index];
-			attach(iconButton(
-				left + index * (third + rowGap),
-				y,
-				third,
-				buttonH,
-				Component.literal(aspect.name() + ": " + armorAspectValueLabel(aspect)),
-				new ItemStack(Items.IRON_CHESTPLATE),
-				press -> {
-					adjustArmorAspect(aspect, aspect.step());
-					relayout();
-				}));
-		}
-
-		int levelY = panelY + AnvilEditorMetrics.effectsLevelRowTop();
-		attach(iconButton(left, levelY, third, buttonH, Component.translatable("screen.hologrammenu.anvil.armor_aspects_reset"), new ItemStack(Items.BARRIER), press -> {
-			resetArmorAspects();
-			relayout();
-		}));
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.armor_aspects_minus"), press -> {
-			adjustAllArmorAspects(-5);
-			relayout();
-		}).bounds(left + third + rowGap, levelY, third, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.armor_aspects_plus"), press -> {
-			adjustAllArmorAspects(5);
-			relayout();
-		}).bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
-
-		int half = ModPanelLayout.columnWidth(contentWidth, 2, rowGap);
-		int actionY = panelY + AnvilEditorMetrics.effectsActionRowTop();
-		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applyArmorAspects()));
-		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeArmorAspects()));
-
-		int footerY = panelY + AnvilEditorMetrics.effectsFooterTop();
-		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
-	}
-
-	private void applySelectedRpgEffect() {
-		RpgCustomEffectStore.CustomEffect custom = selectedCustomRpgEffect();
-		if (custom != null) {
-			ensureLoreLoadedForEffects();
-			String loreLine = custom.loreLine(selectedRpgEffectLevel);
-			ClientPlayNetworking.send(new ModPackets.AnvilApplyCustomRpgEffectPayload(custom.name(), loreLine, false));
-			replaceLocalCustomRpgEffectLine(custom.name(), loreLine);
-			return;
-		}
-		RpgEffectCatalog.Entry selected = RpgEffectCatalog.byId(selectedRpgEffectId);
-		ensureLoreLoadedForEffects();
-		ClientPlayNetworking.send(new ModPackets.AnvilApplyRpgEffectPayload(selected.id(), selectedRpgEffectLevel, false));
-		replaceLocalRpgEffectLine(selected, selected.loreLine(selectedRpgEffectLevel));
-	}
-
-	private void applySwordAspects() {
-		ensureLoreLoadedForEffects();
-		removeLocalSwordAspectLines();
-		for (SwordAspect aspect : SWORD_ASPECTS) {
-			int value = swordAspectValue(aspect);
-			if (value <= aspect.min()) {
-				continue;
-			}
-			String line = swordAspectLoreLine(aspect, value);
-			ClientPlayNetworking.send(new ModPackets.AnvilApplyCustomRpgEffectPayload(aspect.name(), line, false));
-			replaceLocalCustomRpgEffectLine(aspect.name(), line);
-		}
-	}
-
-	private void removeSwordAspects() {
-		ensureLoreLoadedForEffects();
-		for (SwordAspect aspect : SWORD_ASPECTS) {
-			ClientPlayNetworking.send(new ModPackets.AnvilApplyCustomRpgEffectPayload(aspect.name(), swordAspectLoreLine(aspect, aspect.min()), true));
-		}
-		removeLocalSwordAspectLines();
-		if (loreLines.isEmpty()) {
-			loreLines.add("");
-		}
-	}
-
-	private void removeLocalSwordAspectLines() {
-		for (SwordAspect aspect : SWORD_ASPECTS) {
-			loreLines.removeIf(line -> RpgCustomEffectStore.isEffectLoreFor(line, aspect.name()));
-		}
-	}
-
-	private String swordAspectLoreLine(SwordAspect aspect, int value) {
-		return translateAmpersandCodes(aspect.colorCode() + aspect.name() + " " + aspect.valueText(value));
-	}
-
-	private String aspectValueLabel(SwordAspect aspect) {
-		return aspect.valueText(swordAspectValue(aspect));
-	}
-
-	private int swordAspectValue(SwordAspect aspect) {
-		return switch (aspect.name()) {
-			case "Critical Chance" -> swordCritChance;
-			case "Cooldown" -> swordCooldownReduction;
-			case "Parasitic Regen" -> swordLifeSteal;
-			case "Bleed Chance" -> swordBleedChance;
-			case "Armor Pierce" -> swordArmorPierce;
-			case "Execute Damage" -> swordExecuteDamage;
-			default -> 0;
-		};
-	}
-
-	private void adjustSwordAspect(SwordAspect aspect, int delta) {
-		int value = swordAspectValue(aspect) + delta;
-		if (value > aspect.max()) {
-			value = aspect.min();
-		}
-		value = Math.max(aspect.min(), Math.min(aspect.max(), value));
-		setSwordAspectValue(aspect, value);
-	}
-
-	private void setSwordAspectValue(SwordAspect aspect, int value) {
-		switch (aspect.name()) {
-			case "Critical Chance" -> swordCritChance = value;
-			case "Cooldown" -> swordCooldownReduction = value;
-			case "Parasitic Regen" -> swordLifeSteal = value;
-			case "Bleed Chance" -> swordBleedChance = value;
-			case "Armor Pierce" -> swordArmorPierce = value;
-			case "Execute Damage" -> swordExecuteDamage = value;
-			default -> {
-			}
-		}
-	}
-
-	private void resetSwordAspects() {
-		for (SwordAspect aspect : SWORD_ASPECTS) {
-			setSwordAspectValue(aspect, aspect.min());
-		}
-	}
-
-	private void adjustAllSwordAspects(int delta) {
-		for (SwordAspect aspect : SWORD_ASPECTS) {
-			setSwordAspectValue(aspect, Math.max(aspect.min(), Math.min(aspect.max(), swordAspectValue(aspect) + delta)));
-		}
-	}
-
-	private void applyArmorAspects() {
-		ensureLoreLoadedForEffects();
-		removeLocalArmorAspectLines();
-		for (ArmorAspect aspect : ARMOR_ASPECTS) {
-			int value = armorAspectValue(aspect);
-			if (value <= aspect.min()) {
-				continue;
-			}
-			String line = armorAspectLoreLine(aspect, value);
-			ClientPlayNetworking.send(new ModPackets.AnvilApplyCustomRpgEffectPayload(aspect.name(), line, false));
-			replaceLocalCustomRpgEffectLine(aspect.name(), line);
-		}
-	}
-
-	private void removeArmorAspects() {
-		ensureLoreLoadedForEffects();
-		for (ArmorAspect aspect : ARMOR_ASPECTS) {
-			ClientPlayNetworking.send(new ModPackets.AnvilApplyCustomRpgEffectPayload(aspect.name(), armorAspectLoreLine(aspect, aspect.min()), true));
-		}
-		removeLocalArmorAspectLines();
-		if (loreLines.isEmpty()) {
-			loreLines.add("");
-		}
-	}
-
-	private void removeLocalArmorAspectLines() {
-		for (ArmorAspect aspect : ARMOR_ASPECTS) {
-			loreLines.removeIf(line -> RpgCustomEffectStore.isEffectLoreFor(line, aspect.name()));
-		}
-	}
-
-	private String armorAspectLoreLine(ArmorAspect aspect, int value) {
-		return translateAmpersandCodes(aspect.colorCode() + aspect.name() + " " + aspect.valueText(value));
-	}
-
-	private static String translateAmpersandCodes(String value) {
-		StringBuilder translated = new StringBuilder(value.length());
-		for (int index = 0; index < value.length(); index++) {
-			char character = value.charAt(index);
-			if (character == '&' && index + 1 < value.length() && isLegacyCode(value.charAt(index + 1))) {
-				translated.append('§').append(Character.toLowerCase(value.charAt(index + 1)));
-				index++;
-			} else {
-				translated.append(character);
-			}
-		}
-		return translated.toString();
-	}
-
-	private static boolean isLegacyCode(char value) {
-		return (value >= '0' && value <= '9')
-			|| (value >= 'a' && value <= 'f')
-			|| (value >= 'A' && value <= 'F')
-			|| "kKlLmMnNoOrR".indexOf(value) >= 0;
-	}
-
-	private String armorAspectValueLabel(ArmorAspect aspect) {
-		return aspect.valueText(armorAspectValue(aspect));
-	}
-
-	private int armorAspectValue(ArmorAspect aspect) {
-		return switch (aspect.name()) {
-			case "Max Health" -> armorHealthBonus;
-			case "Armor Defense" -> armorDefenseBonus;
-			case "Health Regen" -> armorRegenBonus;
-			default -> 0;
-		};
-	}
-
-	private void adjustArmorAspect(ArmorAspect aspect, int delta) {
-		int value = armorAspectValue(aspect) + delta;
-		if (value > aspect.max()) {
-			value = aspect.min();
-		}
-		value = Math.max(aspect.min(), Math.min(aspect.max(), value));
-		setArmorAspectValue(aspect, value);
-	}
-
-	private void setArmorAspectValue(ArmorAspect aspect, int value) {
-		switch (aspect.name()) {
-			case "Max Health" -> armorHealthBonus = value;
-			case "Armor Defense" -> armorDefenseBonus = value;
-			case "Health Regen" -> armorRegenBonus = value;
-			default -> {
-			}
-		}
-	}
-
-	private void resetArmorAspects() {
-		for (ArmorAspect aspect : ARMOR_ASPECTS) {
-			setArmorAspectValue(aspect, aspect.min());
-		}
-	}
-
-	private void adjustAllArmorAspects(int delta) {
-		for (ArmorAspect aspect : ARMOR_ASPECTS) {
-			setArmorAspectValue(aspect, Math.max(aspect.min(), Math.min(aspect.max(), armorAspectValue(aspect) + delta)));
-		}
-	}
-
-	private void removeSelectedRpgEffect() {
-		RpgCustomEffectStore.CustomEffect custom = selectedCustomRpgEffect();
-		if (custom != null) {
-			ensureLoreLoadedForEffects();
-			ClientPlayNetworking.send(new ModPackets.AnvilApplyCustomRpgEffectPayload(custom.name(), custom.loreLine(selectedRpgEffectLevel), true));
-			loreLines.removeIf(line -> RpgCustomEffectStore.isEffectLoreFor(line, custom.name()));
-			if (loreLines.isEmpty()) {
-				loreLines.add("");
-			}
-			return;
-		}
-		RpgEffectCatalog.Entry selected = RpgEffectCatalog.byId(selectedRpgEffectId);
-		ensureLoreLoadedForEffects();
-		ClientPlayNetworking.send(new ModPackets.AnvilApplyRpgEffectPayload(selected.id(), selectedRpgEffectLevel, true));
-		loreLines.removeIf(line -> RpgEffectCatalog.isEffectLoreFor(line, selected));
-		if (loreLines.isEmpty()) {
-			loreLines.add("");
-		}
-	}
-
-	private void replaceLocalRpgEffectLine(RpgEffectCatalog.Entry selected, String line) {
-		List<String> updated = new ArrayList<>();
-		for (String existing : loreLines) {
-			if (!RpgEffectCatalog.isEffectLoreFor(existing, selected)) {
-				updated.add(existing);
-			}
-		}
-		while (updated.size() >= StorageMenuItemLore.MAX_LINES) {
-			updated.remove(updated.size() - 1);
-		}
-		updated.add(line);
-		loreLines.clear();
-		loreLines.addAll(trimLoreLines(updated));
-	}
-
-	private void replaceLocalCustomRpgEffectLine(String effectName, String line) {
-		List<String> updated = new ArrayList<>();
-		for (String existing : loreLines) {
-			if (!RpgCustomEffectStore.isEffectLoreFor(existing, effectName)) {
-				updated.add(existing);
-			}
-		}
-		while (updated.size() >= StorageMenuItemLore.MAX_LINES) {
-			updated.remove(updated.size() - 1);
-		}
-		updated.add(line);
-		loreLines.clear();
-		loreLines.addAll(trimLoreLines(updated));
-	}
-
-	private List<RpgEffectOption> rpgEffectOptions() {
-		List<RpgEffectOption> options = new ArrayList<>();
-		for (RpgCustomEffectStore.CustomEffect effect : RpgCustomEffectStore.effects()) {
-			options.add(new RpgEffectOption(effect.id(), effect.name()));
-		}
-		for (RpgEffectCatalog.Entry effect : RpgEffectCatalog.effects()) {
-			options.add(new RpgEffectOption(effect.id(), effect.name()));
-		}
-		if (options.size() > 8) {
-			return options.subList(0, 8);
-		}
-		return options;
-	}
-
-	private RpgCustomEffectStore.CustomEffect selectedCustomRpgEffect() {
-		return RpgCustomEffectStore.find(selectedRpgEffectId).orElse(null);
-	}
-
-	private int clampSelectedRpgLevel(int level) {
-		RpgCustomEffectStore.CustomEffect custom = selectedCustomRpgEffect();
-		if (custom != null) {
-			return Math.min(custom.maxLevel(), RpgCustomEffectStore.clampLevel(level));
-		}
-		return RpgEffectCatalog.clampLevel(level);
-	}
-
-	private void applySelectedVanillaEnchant() {
-		selectedVanillaEnchantLevel = vanillaEnchantLevel();
-		ClientPlayNetworking.send(new ModPackets.AnvilApplyEnchantPayload(selectedVanillaEnchantId, selectedVanillaEnchantLevel, false));
-	}
-
-	private void removeSelectedVanillaEnchant() {
-		ClientPlayNetworking.send(new ModPackets.AnvilApplyEnchantPayload(selectedVanillaEnchantId, selectedVanillaEnchantLevel, true));
-	}
-
-	private void adjustVanillaEnchantLevel(int delta) {
-		selectedVanillaEnchantLevel = Math.max(1, Math.min(255, vanillaEnchantLevel() + delta));
-		if (vanillaEnchantLevelField != null) {
-			vanillaEnchantLevelField.setValue(Integer.toString(selectedVanillaEnchantLevel));
-		}
-	}
-
-	private int vanillaEnchantLevel() {
-		if (vanillaEnchantLevelField != null) {
-			return parseEnchantLevel(vanillaEnchantLevelField.getValue());
-		}
-		return Math.max(1, Math.min(255, selectedVanillaEnchantLevel));
-	}
-
-	private static int parseEnchantLevel(String value) {
-		if (value == null || value.isBlank()) {
-			return 1;
-		}
-		try {
-			return Math.max(1, Math.min(255, Integer.parseInt(value.trim())));
-		} catch (NumberFormatException ignored) {
-			return 1;
-		}
-	}
-
-	private int maxVanillaEnchantPage() {
-		return Math.max(0, (VANILLA_ENCHANTS.size() - 1) / ENCHANTS_PER_PAGE);
-	}
-
-	private void ensureLoreLoadedForEffects() {
-		if (loreLines.isEmpty() && anvilStackSupplier != null) {
-			ItemStack stack = anvilStackSupplier.get();
-			if (!stack.isEmpty()) {
-				loadLoreFromStack(stack);
-			}
-		}
-	}
-
-	private List<String> trimLoreLines(List<String> lines) {
-		return lines.stream()
-			.filter(line -> !TextFormats.normalize(line).isBlank())
-			.limit(StorageMenuItemLore.MAX_LINES)
-			.toList();
-	}
-
-	private void refreshRpgEffectSelectionOutlines() {
-		clearSelectionOutlines();
-		Button selected = rpgEffectButtons.get(selectedRpgEffectId);
-		if (selected != null) {
-			markSelectionWidget(selected);
-		}
-	}
-
-	private void refreshVanillaEnchantSelectionOutlines() {
-		clearSelectionOutlines();
-		Button selected = vanillaEnchantButtons.get(selectedVanillaEnchantId);
-		if (selected != null) {
-			markSelectionWidget(selected);
-		}
 	}
 
 	private void syncLoreLinesFromFields() {
@@ -2507,10 +1748,6 @@ public final class TextStyleOverlay {
 		loreParagraphField = null;
 		anvilStyleTabButton = null;
 		anvilLoreTabButton = null;
-		anvilEffectsTabButton = null;
-		vanillaEnchantLevelField = null;
-		rpgEffectButtons.clear();
-		vanillaEnchantButtons.clear();
 	}
 
 	private void attach(GuiEventListener widget) {
@@ -2666,19 +1903,6 @@ public final class TextStyleOverlay {
 		}
 	}
 
-	private enum EffectsSubTab {
-		RPG,
-		ENCHANTS,
-		SWORD,
-		ARMOR
-	}
-
-	private enum EditorEffectsMode {
-		NONE,
-		ENCHANTS_ONLY,
-		ALL
-	}
-
 	private enum LoreDynamicStyle {
 		CLEAN("screen.hologrammenu.anvil.lore_style.clean"),
 		ACCENT("screen.hologrammenu.anvil.lore_style.accent"),
@@ -2696,12 +1920,6 @@ public final class TextStyleOverlay {
 		}
 	}
 
-	private record VanillaEnchantOption(String id, String label) {
-	}
-
-	private record RpgEffectOption(String id, String name) {
-	}
-
 	private record WordRange(int start, int end) {
 	}
 
@@ -2710,21 +1928,6 @@ public final class TextStyleOverlay {
 
 		private boolean hasSelection() {
 			return end > start;
-		}
-	}
-
-	private record SwordAspect(String name, String colorCode, String valueFormat, int min, int max, int step) {
-		private String valueText(int value) {
-			if (name.equals("Cooldown")) {
-				return String.format(java.util.Locale.ROOT, valueFormat, String.format(java.util.Locale.ROOT, "%.1f", value / 10.0F));
-			}
-			return String.format(java.util.Locale.ROOT, valueFormat, value);
-		}
-	}
-
-	private record ArmorAspect(String name, String colorCode, String valueFormat, int min, int max, int step) {
-		private String valueText(int value) {
-			return String.format(java.util.Locale.ROOT, valueFormat, value);
 		}
 	}
 
