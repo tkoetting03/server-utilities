@@ -4,7 +4,7 @@ import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScale;
 import com.hologrammenu.client.screen.widget.UiScaleText;
-import com.hologrammenu.client.screen.widget.IconPlaceholderButton;
+import com.hologrammenu.client.screen.widget.VanillaIconButton;
 import com.hologrammenu.rpg.RpgCustomEffectStore;
 import com.hologrammenu.rpg.RpgEffectCatalog;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -12,6 +12,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -89,12 +91,13 @@ public class RpgEffectsScreen extends Screen {
 			RpgEffectCatalog.Entry effect = effects.get(index);
 			int col = index % 2;
 			int row = index / 2;
-			Button button = IconPlaceholderButton.create(
+			Button button = VanillaIconButton.create(
 				left + col * (half + rowGap),
 				top + row * (buttonHeight + rowGap),
 				half,
 				buttonHeight,
 				Component.literal(effect.category() + ": " + effect.name()),
+				new ItemStack(Items.EXPERIENCE_BOTTLE),
 				press -> {
 					selectedPresetId = effect.id();
 					loadPreset(effect);
@@ -130,12 +133,13 @@ public class RpgEffectsScreen extends Screen {
 			int local = index - start;
 			int col = local % 2;
 			int row = local / 2;
-			Button button = IconPlaceholderButton.create(
+			Button button = VanillaIconButton.create(
 				left + col * (half + rowGap),
 				top + row * (buttonHeight + rowGap),
 				half,
 				buttonHeight,
 				Component.literal(effect.category() + ": " + effect.name()),
+				new ItemStack(Items.ENCHANTED_BOOK),
 				press -> {
 					selectedCustomId = effect.id();
 					loadCustom(effect);

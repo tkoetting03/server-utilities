@@ -3,6 +3,7 @@ package com.hologrammenu.client.screen;
 import com.hologrammenu.client.mixin.accessor.AbstractContainerScreenAccessor;
 import com.hologrammenu.client.mixin.accessor.ScreenInvoker;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
+import com.hologrammenu.client.screen.widget.VanillaIconButton;
 import com.hologrammenu.itemstyler.ItemStylerMenu;
 import com.hologrammenu.network.ModPackets;
 import com.hologrammenu.text.TextFormats;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -80,15 +82,27 @@ public final class ItemStylerOverlay {
 		screenInvoker.hologrammenu$addRenderableWidget(nameField);
 		ModUiRenderContext.markIfInteractive(nameField);
 
-		confirmButton = Button.builder(Component.translatable("screen.hologrammenu.item_styler.confirm"), press -> applyName())
-			.bounds(actionX, y, Math.max(confirmWidth, actionWidth), buttonHeight)
-			.build();
+		confirmButton = VanillaIconButton.create(
+			actionX,
+			y,
+			Math.max(confirmWidth, actionWidth),
+			buttonHeight,
+			Component.translatable("screen.hologrammenu.item_styler.confirm"),
+			new ItemStack(Items.EMERALD),
+			press -> applyName()
+		);
 		screenInvoker.hologrammenu$addRenderableWidget(confirmButton);
 		ModUiRenderContext.markIfInteractive(confirmButton);
 
-		styleButton = Button.builder(Component.translatable("screen.hologrammenu.item_styler.style"), press -> toggleStylePanel())
-			.bounds(actionX, layout.hologrammenu$getTopPos() + 2, actionWidth, buttonHeight)
-			.build();
+		styleButton = VanillaIconButton.create(
+			actionX,
+			layout.hologrammenu$getTopPos() + 2,
+			actionWidth,
+			buttonHeight,
+			Component.translatable("screen.hologrammenu.item_styler.style"),
+			new ItemStack(Items.NAME_TAG),
+			press -> toggleStylePanel()
+		);
 		screenInvoker.hologrammenu$addRenderableWidget(styleButton);
 		ModUiRenderContext.markIfInteractive(styleButton);
 

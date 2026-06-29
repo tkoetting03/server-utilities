@@ -4,13 +4,15 @@ import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScale;
 import com.hologrammenu.client.screen.widget.UiScaleText;
-import com.hologrammenu.client.screen.widget.IconPlaceholderButton;
+import com.hologrammenu.client.screen.widget.VanillaIconButton;
 import com.hologrammenu.rpg.RpgSkillStore;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -86,12 +88,13 @@ public class RpgSkillsScreen extends Screen {
 			int local = index - start;
 			int col = local % 2;
 			int row = local / 2;
-			Button button = IconPlaceholderButton.create(
+			Button button = VanillaIconButton.create(
 				left + col * (half + rowGap),
 				top + row * (buttonHeight + rowGap),
 				half,
 				buttonHeight,
 				Component.literal(skill.name()),
+				skillIcon(skill.id()),
 				press -> {
 					selectedSkillId = skill.id();
 					loadSkill(skill);
@@ -336,6 +339,20 @@ public class RpgSkillsScreen extends Screen {
 			UiScaleText.draw(graphics, this.font, entry, left, y, 0xCFCFCF, false);
 			y += UiScale.s(8);
 		}
+	}
+
+	private static ItemStack skillIcon(String skillId) {
+		return new ItemStack(switch (skillId) {
+			case "mining" -> Items.IRON_PICKAXE;
+			case "fishing" -> Items.FISHING_ROD;
+			case "woodcutting" -> Items.IRON_AXE;
+			case "farming" -> Items.WHEAT;
+			case "combat" -> Items.IRON_SWORD;
+			case "excavation" -> Items.IRON_SHOVEL;
+			case "alchemy" -> Items.POTION;
+			case "foraging" -> Items.OAK_SAPLING;
+			default -> Items.BOOK;
+		});
 	}
 
 	private static final String[] COLOR_CODE_INDEX = {

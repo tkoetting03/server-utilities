@@ -8,7 +8,6 @@ import com.hologrammenu.client.screen.ModUiSelectionState;
 import com.hologrammenu.client.screen.widget.ClassicColorSwatchButton;
 import com.hologrammenu.client.screen.widget.DraggableTitleBarWidget;
 import com.hologrammenu.client.screen.widget.GradientPreviewWidget;
-import com.hologrammenu.client.screen.widget.IconPlaceholderButton;
 import com.hologrammenu.client.screen.widget.LabeledFieldLayout;
 import com.hologrammenu.client.screen.widget.ModPanelLayout;
 import com.hologrammenu.client.screen.widget.PartSelectEditBox;
@@ -17,6 +16,7 @@ import com.hologrammenu.client.screen.widget.TextStylePanelLayout;
 import com.hologrammenu.client.screen.widget.TextStylePanelWidget;
 import com.hologrammenu.client.screen.widget.UiLayoutHelper;
 import com.hologrammenu.client.screen.widget.UiScale;
+import com.hologrammenu.client.screen.widget.VanillaIconButton;
 import com.hologrammenu.client.screen.widget.AnvilEditorMetrics;
 import com.hologrammenu.client.screen.widget.AnvilEditorPanelWidget;
 import com.hologrammenu.network.ModPackets;
@@ -39,6 +39,7 @@ import net.minecraft.client.gui.screens.inventory.AnvilScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -910,7 +911,7 @@ public final class TextStyleOverlay {
 			return;
 		}
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_color_gradient"), press -> {
+		attach(iconButton(fieldX, y, fieldWidth, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_color_gradient"), new ItemStack(Items.MAGENTA_DYE), press -> {
 			loreColorSelection = loreParagraphSelection();
 			if (!loreColorSelection.hasSelection()) {
 				loreColorSelection = new SelectionRange(0, loreParagraphDraft.text().length());
@@ -919,15 +920,15 @@ public final class TextStyleOverlay {
 			loreColorTableOpen = true;
 			relayout();
 			releaseButtonFocus(press);
-		}).bounds(fieldX, y, fieldWidth, buttonH).build());
+		}));
 		y += buttonH + rowGap;
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_wrap", loreWrapWidth), press -> {
+		attach(iconButton(fieldX, y, fieldWidth, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_wrap", loreWrapWidth), new ItemStack(Items.PAPER), press -> {
 			loreWrapWidth = loreWrapWidth >= 42 ? 24 : loreWrapWidth + 6;
 			rebuildParagraphLoreFromDraft();
 			relayout();
 			applyLore();
-		}).bounds(fieldX, y, fieldWidth, buttonH).build());
+		}));
 		y += buttonH + ModPanelLayout.SECTION_GAP;
 
 		StyledText.Effect[] paragraphEffects = {
@@ -952,28 +953,24 @@ public final class TextStyleOverlay {
 		}
 		y += ModPanelLayout.stackHeight(2, buttonH, rowGap) + ModPanelLayout.SECTION_GAP;
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_preview", generatedLoreLineCount()), press -> {
+		attach(iconButton(fieldX, y, fieldWidth, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_preview", generatedLoreLineCount()), new ItemStack(Items.WRITABLE_BOOK), press -> {
 			selectedLoreLineIndex = Math.min(selectedLoreLineIndex + 1, Math.max(0, loreLines.size() - 1));
 			refreshLoreSelectionOutlines();
-		}).bounds(fieldX, y, fieldWidth, buttonH).build());
+		}));
 
 		int actionRowY = y + buttonH + ModPanelLayout.SECTION_GAP;
 		int footerY = panelY + AnvilEditorMetrics.loreFooterTop(lineCount);
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_expand_style"), press -> openLoreLineStyle())
-			.bounds(fieldX, actionRowY, half, buttonH).build());
+		attach(iconButton(fieldX, actionRowY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_expand_style"), new ItemStack(Items.NAME_TAG), press -> openLoreLineStyle()));
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_regenerate"), press -> {
+		attach(iconButton(fieldX + half + rowGap, actionRowY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_regenerate"), new ItemStack(Items.CRAFTING_TABLE), press -> {
 			rebuildParagraphLoreFromDraft();
 			applyLore();
-		})
-			.bounds(fieldX + half + rowGap, actionRowY, half, buttonH).build());
+		}));
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_reset"), press -> resetLore())
-			.bounds(fieldX, footerY, half, buttonH).build());
+		attach(iconButton(fieldX, footerY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.lore_reset"), new ItemStack(Items.BARRIER), press -> resetLore()));
 
-		attach(Button.builder(Component.translatable("gui.done"), press -> close())
-			.bounds(fieldX + half + rowGap, footerY, half, buttonH).build());
+		attach(iconButton(fieldX + half + rowGap, footerY, half, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
 	}
 
 	private void buildLoreColorTable(int fieldX, int y, int fieldWidth, int buttonH, int rowGap) {
@@ -1005,17 +1002,17 @@ public final class TextStyleOverlay {
 		y += colorPicker.getHeight() + rowGap;
 
 		int half = ModPanelLayout.columnWidth(fieldWidth, 2, rowGap);
-		solidModeButton = Button.builder(TextStylePanelLayout.solidModeLabel(), press -> {
+		solidModeButton = iconButton(fieldX, y, half, buttonH, TextStylePanelLayout.solidModeLabel(), new ItemStack(Items.LIME_DYE), press -> {
 			colorEditMode = ColorEditMode.SOLID;
 			relayout();
 			releaseButtonFocus(press);
-		}).bounds(fieldX, y, half, buttonH).build();
-		gradientModeButton = Button.builder(TextStylePanelLayout.gradientModeLabel(), press -> {
+		});
+		gradientModeButton = iconButton(fieldX + half + rowGap, y, half, buttonH, TextStylePanelLayout.gradientModeLabel(), new ItemStack(Items.AMETHYST_SHARD), press -> {
 			colorEditMode = ColorEditMode.GRADIENT;
 			gradientTarget = GradientTarget.START;
 			relayout();
 			releaseButtonFocus(press);
-		}).bounds(fieldX + half + rowGap, y, half, buttonH).build();
+		});
 		attach(solidModeButton);
 		attach(gradientModeButton);
 		markSelectionWidget(colorEditMode == ColorEditMode.SOLID ? solidModeButton : gradientModeButton);
@@ -1033,40 +1030,40 @@ public final class TextStyleOverlay {
 			attach(gradientPreview, false);
 			y += gradientPreview.getHeight() + rowGap;
 
-			gradientStartButton = Button.builder(Component.translatable("screen.hologrammenu.text_style.gradient_start"), press -> {
+			gradientStartButton = iconButton(fieldX, y, half, buttonH, Component.translatable("screen.hologrammenu.text_style.gradient_start"), new ItemStack(Items.GLOW_INK_SAC), press -> {
 				gradientTarget = GradientTarget.START;
 				if (colorPicker != null) {
 					colorPicker.setColor(loreAccentColor);
 				}
 				relayout();
 				releaseButtonFocus(press);
-			}).bounds(fieldX, y, half, buttonH).build();
-			gradientEndButton = Button.builder(Component.translatable("screen.hologrammenu.text_style.gradient_end"), press -> {
+			});
+			gradientEndButton = iconButton(fieldX + half + rowGap, y, half, buttonH, Component.translatable("screen.hologrammenu.text_style.gradient_end"), new ItemStack(Items.INK_SAC), press -> {
 				gradientTarget = GradientTarget.END;
 				if (colorPicker != null) {
 					colorPicker.setColor(loreBaseColor);
 				}
 				relayout();
 				releaseButtonFocus(press);
-			}).bounds(fieldX + half + rowGap, y, half, buttonH).build();
+			});
 			attach(gradientStartButton);
 			attach(gradientEndButton);
 			markSelectionWidget(gradientTarget == GradientTarget.START ? gradientStartButton : gradientEndButton);
 			y += buttonH + rowGap;
 		}
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_apply"), press -> {
+		attach(iconButton(fieldX, y, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> {
 			applyLoreColorChoice(true);
 			loreColorTableOpen = false;
 			relayout();
 			applyLore();
 			releaseButtonFocus(press);
-		}).bounds(fieldX, y, half, buttonH).build());
-		attach(Button.builder(Component.translatable("gui.back"), press -> {
+		}));
+		attach(iconButton(fieldX + half + rowGap, y, half, buttonH, Component.translatable("gui.back"), new ItemStack(Items.ARROW), press -> {
 			loreColorTableOpen = false;
 			relayout();
 			releaseButtonFocus(press);
-		}).bounds(fieldX + half + rowGap, y, half, buttonH).build());
+		}));
 	}
 
 	private String loreParagraphText() {
@@ -1565,12 +1562,13 @@ public final class TextStyleOverlay {
 			RpgEffectOption effect = effects.get(index);
 			int col = index % 2;
 			int row = index / 2;
-			Button button = IconPlaceholderButton.create(
+			Button button = iconButton(
 				left + col * (half + rowGap),
 				y + row * (buttonH + rowGap),
 				half,
 				buttonH,
 				Component.literal(effect.name()),
+				new ItemStack(Items.EXPERIENCE_BOTTLE),
 				press -> {
 					selectedRpgEffectId = effect.id();
 					refreshRpgEffectSelectionOutlines();
@@ -1596,14 +1594,11 @@ public final class TextStyleOverlay {
 		}).bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
 
 		int actionY = panelY + AnvilEditorMetrics.effectsActionRowTop();
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_apply"), press -> applySelectedRpgEffect())
-			.bounds(left, actionY, half, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_remove"), press -> removeSelectedRpgEffect())
-			.bounds(left + half + rowGap, actionY, half, buttonH).build());
+		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applySelectedRpgEffect()));
+		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeSelectedRpgEffect()));
 
 		int footerY = panelY + AnvilEditorMetrics.effectsFooterTop();
-		attach(Button.builder(Component.translatable("gui.done"), press -> close())
-			.bounds(left, footerY, contentWidth, buttonH).build());
+		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
 		refreshRpgEffectSelectionOutlines();
 	}
 
@@ -1624,11 +1619,11 @@ public final class TextStyleOverlay {
 			int local = index - start;
 			int col = local % 2;
 			int row = local / 2;
-			Button button = Button.builder(Component.literal(option.label()), press -> {
+			Button button = iconButton(left + col * (half + rowGap), y + row * (buttonH + rowGap), half, buttonH, Component.literal(option.label()), new ItemStack(Items.ENCHANTED_BOOK), press -> {
 				selectedVanillaEnchantId = option.id();
 				refreshVanillaEnchantSelectionOutlines();
 				releaseButtonFocus(press);
-			}).bounds(left + col * (half + rowGap), y + row * (buttonH + rowGap), half, buttonH).build();
+			});
 			vanillaEnchantButtons.put(option.id(), button);
 			attach(button);
 		}
@@ -1667,14 +1662,11 @@ public final class TextStyleOverlay {
 			.bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
 
 		int actionY = panelY + AnvilEditorMetrics.effectsEnchantActionRowTop();
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_apply"), press -> applySelectedVanillaEnchant())
-			.bounds(left, actionY, half, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_remove"), press -> removeSelectedVanillaEnchant())
-			.bounds(left + half + rowGap, actionY, half, buttonH).build());
+		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applySelectedVanillaEnchant()));
+		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeSelectedVanillaEnchant()));
 
 		int footerY = panelY + AnvilEditorMetrics.effectsEnchantFooterTop();
-		attach(Button.builder(Component.translatable("gui.done"), press -> close())
-			.bounds(left, footerY, contentWidth, buttonH).build());
+		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
 		refreshVanillaEnchantSelectionOutlines();
 	}
 
@@ -1689,12 +1681,13 @@ public final class TextStyleOverlay {
 			SwordAspect aspect = SWORD_ASPECTS[index];
 			int col = index % 2;
 			int row = index / 2;
-			attach(IconPlaceholderButton.create(
+			attach(iconButton(
 				left + col * (half + rowGap),
 				y + row * (buttonH + rowGap),
 				half,
 				buttonH,
 				Component.literal(aspect.name() + ": " + aspectValueLabel(aspect)),
+				new ItemStack(Items.IRON_SWORD),
 				press -> {
 					adjustSwordAspect(aspect, aspect.step());
 					relayout();
@@ -1703,10 +1696,10 @@ public final class TextStyleOverlay {
 
 		int levelY = panelY + AnvilEditorMetrics.effectsLevelRowTop();
 		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.sword_aspects_reset"), press -> {
+		attach(iconButton(left, levelY, third, buttonH, Component.translatable("screen.hologrammenu.anvil.sword_aspects_reset"), new ItemStack(Items.BARRIER), press -> {
 			resetSwordAspects();
 			relayout();
-		}).bounds(left, levelY, third, buttonH).build());
+		}));
 		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.sword_aspects_minus"), press -> {
 			adjustAllSwordAspects(-5);
 			relayout();
@@ -1717,14 +1710,11 @@ public final class TextStyleOverlay {
 		}).bounds(left + (third + rowGap) * 2, levelY, third, buttonH).build());
 
 		int actionY = panelY + AnvilEditorMetrics.effectsActionRowTop();
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_apply"), press -> applySwordAspects())
-			.bounds(left, actionY, half, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_remove"), press -> removeSwordAspects())
-			.bounds(left + half + rowGap, actionY, half, buttonH).build());
+		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applySwordAspects()));
+		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeSwordAspects()));
 
 		int footerY = panelY + AnvilEditorMetrics.effectsFooterTop();
-		attach(Button.builder(Component.translatable("gui.done"), press -> close())
-			.bounds(left, footerY, contentWidth, buttonH).build());
+		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
 	}
 
 	private void buildArmorAspectWidgets(int panelX, int panelY) {
@@ -1736,12 +1726,13 @@ public final class TextStyleOverlay {
 		int y = panelY + AnvilEditorMetrics.effectsGridTop();
 		for (int index = 0; index < ARMOR_ASPECTS.length; index++) {
 			ArmorAspect aspect = ARMOR_ASPECTS[index];
-			attach(IconPlaceholderButton.create(
+			attach(iconButton(
 				left + index * (third + rowGap),
 				y,
 				third,
 				buttonH,
 				Component.literal(aspect.name() + ": " + armorAspectValueLabel(aspect)),
+				new ItemStack(Items.IRON_CHESTPLATE),
 				press -> {
 					adjustArmorAspect(aspect, aspect.step());
 					relayout();
@@ -1749,10 +1740,10 @@ public final class TextStyleOverlay {
 		}
 
 		int levelY = panelY + AnvilEditorMetrics.effectsLevelRowTop();
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.armor_aspects_reset"), press -> {
+		attach(iconButton(left, levelY, third, buttonH, Component.translatable("screen.hologrammenu.anvil.armor_aspects_reset"), new ItemStack(Items.BARRIER), press -> {
 			resetArmorAspects();
 			relayout();
-		}).bounds(left, levelY, third, buttonH).build());
+		}));
 		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.armor_aspects_minus"), press -> {
 			adjustAllArmorAspects(-5);
 			relayout();
@@ -1764,14 +1755,11 @@ public final class TextStyleOverlay {
 
 		int half = ModPanelLayout.columnWidth(contentWidth, 2, rowGap);
 		int actionY = panelY + AnvilEditorMetrics.effectsActionRowTop();
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_apply"), press -> applyArmorAspects())
-			.bounds(left, actionY, half, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_remove"), press -> removeArmorAspects())
-			.bounds(left + half + rowGap, actionY, half, buttonH).build());
+		attach(iconButton(left, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_apply"), new ItemStack(Items.EMERALD), press -> applyArmorAspects()));
+		attach(iconButton(left + half + rowGap, actionY, half, buttonH, Component.translatable("screen.hologrammenu.anvil.effects_remove"), new ItemStack(Items.BARRIER), press -> removeArmorAspects()));
 
 		int footerY = panelY + AnvilEditorMetrics.effectsFooterTop();
-		attach(Button.builder(Component.translatable("gui.done"), press -> close())
-			.bounds(left, footerY, contentWidth, buttonH).build());
+		attach(iconButton(left, footerY, contentWidth, buttonH, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> close()));
 	}
 
 	private void applySelectedRpgEffect() {
@@ -2552,6 +2540,18 @@ public final class TextStyleOverlay {
 		if (dragGroup != null && widget instanceof AbstractWidget abstractWidget && !(widget instanceof DraggableTitleBarWidget)) {
 			dragGroup.track(abstractWidget);
 		}
+	}
+
+	private static Button iconButton(
+		int x,
+		int y,
+		int width,
+		int height,
+		Component message,
+		ItemStack icon,
+		Button.OnPress onPress
+	) {
+		return VanillaIconButton.create(x, y, width, height, message, icon, onPress);
 	}
 
 	public static int[] clampPanelPosition(Screen screen, int panelX, int panelY) {
