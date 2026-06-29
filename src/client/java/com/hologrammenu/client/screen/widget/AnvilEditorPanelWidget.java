@@ -17,11 +17,23 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 	}
 
 	public AnvilEditorPanelWidget(int x, int y, AnvilEditorTab activeTab, int partCount, int lineCount, boolean gradientExpanded) {
+		this(x, y, activeTab, partCount, lineCount, gradientExpanded, false);
+	}
+
+	public AnvilEditorPanelWidget(
+		int x,
+		int y,
+		AnvilEditorTab activeTab,
+		int partCount,
+		int lineCount,
+		boolean gradientExpanded,
+		boolean loreColorTableOpen
+	) {
 		super(
 			x,
 			y,
 			AnvilEditorMetrics.PANEL_WIDTH,
-			panelHeight(activeTab, partCount, lineCount, gradientExpanded),
+			panelHeight(activeTab, partCount, lineCount, gradientExpanded, loreColorTableOpen),
 			panelTitle(activeTab)
 		);
 		this.activeTab = activeTab;
@@ -36,9 +48,19 @@ public class AnvilEditorPanelWidget extends AbstractWidget {
 	}
 
 	public static int panelHeight(AnvilEditorTab activeTab, int partCount, int lineCount, boolean gradientExpanded) {
+		return panelHeight(activeTab, partCount, lineCount, gradientExpanded, false);
+	}
+
+	public static int panelHeight(
+		AnvilEditorTab activeTab,
+		int partCount,
+		int lineCount,
+		boolean gradientExpanded,
+		boolean loreColorTableOpen
+	) {
 		return switch (activeTab) {
 			case STYLE -> AnvilEditorMetrics.stylePanelHeight(partCount, gradientExpanded);
-			case LORE -> AnvilEditorMetrics.lorePanelHeight(lineCount);
+			case LORE -> AnvilEditorMetrics.lorePanelHeight(lineCount, loreColorTableOpen, gradientExpanded);
 			case EFFECTS -> AnvilEditorMetrics.effectsPanelHeight();
 		};
 	}

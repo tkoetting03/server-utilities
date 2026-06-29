@@ -394,7 +394,13 @@ public final class TextStyleOverlay {
 			return TextStylePanelWidget.panelHeight(partCount, 0, gradientExpanded);
 		}
 		int lineCount = Math.max(1, Math.min(loreLines.size(), StorageMenuItemLore.MAX_LINES));
-		return AnvilEditorPanelWidget.panelHeight(anvilActiveTab, partCount, lineCount, gradientExpanded);
+		return AnvilEditorPanelWidget.panelHeight(
+			anvilActiveTab,
+			partCount,
+			lineCount,
+			gradientExpanded,
+			anvilActiveTab == AnvilEditorTab.LORE && loreColorTableOpen
+		);
 	}
 
 	private void loadPartsFromDraft(StyledText value) {
@@ -429,7 +435,8 @@ public final class TextStyleOverlay {
 				anvilActiveTab,
 				partCount,
 				lineCount,
-				colorEditMode == ColorEditMode.GRADIENT
+				colorEditMode == ColorEditMode.GRADIENT,
+				anvilActiveTab == AnvilEditorTab.LORE && loreColorTableOpen
 			);
 			screenInvoker.hologrammenu$addRenderableOnly(panelWidget);
 			widgets.add(panelWidget);
@@ -896,23 +903,6 @@ public final class TextStyleOverlay {
 		y += paragraphHeight + rowGap;
 
 		int half = ModPanelLayout.columnWidth(fieldWidth, 2, rowGap);
-		for (LoreDynamicStyle style : LoreDynamicStyle.values()) {
-			int index = style.ordinal();
-			int column = index % 2;
-			int row = index / 2;
-			Button button = Button.builder(Component.translatable(style.translationKey()), press -> {
-				loreDynamicStyle = style;
-				applyLoreDynamicStyleToSelection();
-				relayout();
-				applyLore();
-			}).bounds(fieldX + column * (half + rowGap), y + row * (buttonH + rowGap), half, buttonH).build();
-			attach(button);
-			if (loreDynamicStyle == style) {
-				markSelectionWidget(button);
-			}
-		}
-		y += ModPanelLayout.stackHeight(2, buttonH, rowGap) + ModPanelLayout.SECTION_GAP;
-
 		if (loreColorTableOpen) {
 			buildLoreColorTable(fieldX, y, fieldWidth, buttonH, rowGap);
 			return;
