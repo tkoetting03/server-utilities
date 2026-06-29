@@ -133,6 +133,7 @@
   "screen.hologrammenu.anvil.lore_regenerate": "Rebuild Lines",
   "screen.hologrammenu.anvil.lore_preview": "Lines: %s",
   "screen.hologrammenu.anvil.lore_wrap": "Wrap Width: %s",
+  "screen.hologrammenu.anvil.lore_color_gradient": "Color / Gradient",
   "screen.hologrammenu.anvil.lore_color_base": "Base Color",
   "screen.hologrammenu.anvil.lore_color_accent": "Accent Color",
   "screen.hologrammenu.anvil.lore_style.clean": "Clean",

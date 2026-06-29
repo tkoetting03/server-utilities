@@ -104,6 +104,8 @@ public final class TextStyleOverlay {
 	private int loreBaseColor = 0xA0A0A0;
 	private int loreAccentColor = 0x55FFFF;
 	private int loreWrapWidth = 32;
+	private boolean loreColorTableOpen;
+	private SelectionRange loreColorSelection = SelectionRange.NONE;
 	private final EnumSet<StyledText.Effect> loreParagraphEffects = EnumSet.noneOf(StyledText.Effect.class);
 	private Button anvilStyleTabButton;
 	private Button anvilLoreTabButton;
@@ -911,18 +913,21 @@ public final class TextStyleOverlay {
 		}
 		y += ModPanelLayout.stackHeight(2, buttonH, rowGap) + ModPanelLayout.SECTION_GAP;
 
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_color_base"), press -> {
-			loreBaseColor = nextLoreBaseColor();
-			applyLoreColorToSelection(loreBaseColor);
+		if (loreColorTableOpen) {
+			buildLoreColorTable(fieldX, y, fieldWidth, buttonH, rowGap);
+			return;
+		}
+
+		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_color_gradient"), press -> {
+			loreColorSelection = loreParagraphSelection();
+			if (!loreColorSelection.hasSelection()) {
+				loreColorSelection = new SelectionRange(0, loreParagraphDraft.text().length());
+			}
+			colorEditMode = ColorEditMode.SOLID;
+			loreColorTableOpen = true;
 			relayout();
-			applyLore();
-		}).bounds(fieldX, y, half, buttonH).build());
-		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_color_accent"), press -> {
-			loreAccentColor = complementRgb(loreAccentColor);
-			applyLoreColorToSelection(loreAccentColor);
-			relayout();
-			applyLore();
-		}).bounds(fieldX + half + rowGap, y, half, buttonH).build());
+			releaseButtonFocus(press);
+		}).bounds(fieldX, y, fieldWidth, buttonH).build());
 		y += buttonH + rowGap;
 
 		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.lore_wrap", loreWrapWidth), press -> {
@@ -977,6 +982,99 @@ public final class TextStyleOverlay {
 
 		attach(Button.builder(Component.translatable("gui.done"), press -> close())
 			.bounds(fieldX + half + rowGap, footerY, half, buttonH).build());
+	}
+
+	private void buildLoreColorTable(int fieldX, int y, int fieldWidth, int buttonH, int rowGap) {
+		int swatch = (fieldWidth - rowGap * (TextFormats.COLORS.size() / 2 - 1)) / (TextFormats.COLORS.size() / 2);
+		int index = 0;
+		for (TextFormats.ColorOption color : TextFormats.COLORS.values()) {
+			int column = index % (TextFormats.COLORS.size() / 2);
+			int row = index / (TextFormats.COLORS.size() / 2);
+			int x = fieldX + column * (swatch + rowGap);
+			int swatchY = y + row * (swatch + rowGap);
+			attach(new ClassicColorSwatchButton(x, swatchY, swatch, color.previewColor(), () -> {
+				setLorePickerColor(color.previewColor());
+				applyLoreColorChoice(true);
+				applyLore();
+			}));
+			index++;
+		}
+		y += 2 * swatch + rowGap + ModPanelLayout.SECTION_GAP;
+
+		colorPicker = new RgbColorPickerWidget(
+			fieldX,
+			y,
+			fieldWidth,
+			colorEditMode == ColorEditMode.GRADIENT ? activeLoreGradientColor() : loreBaseColor,
+			this::setLorePickerColor,
+			TextStylePanelLayout.PICKER_SCALE
+		);
+		attach(colorPicker);
+		y += colorPicker.getHeight() + rowGap;
+
+		int half = ModPanelLayout.columnWidth(fieldWidth, 2, rowGap);
+		solidModeButton = Button.builder(TextStylePanelLayout.solidModeLabel(), press -> {
+			colorEditMode = ColorEditMode.SOLID;
+			relayout();
+			releaseButtonFocus(press);
+		}).bounds(fieldX, y, half, buttonH).build();
+		gradientModeButton = Button.builder(TextStylePanelLayout.gradientModeLabel(), press -> {
+			colorEditMode = ColorEditMode.GRADIENT;
+			gradientTarget = GradientTarget.START;
+			relayout();
+			releaseButtonFocus(press);
+		}).bounds(fieldX + half + rowGap, y, half, buttonH).build();
+		attach(solidModeButton);
+		attach(gradientModeButton);
+		markSelectionWidget(colorEditMode == ColorEditMode.SOLID ? solidModeButton : gradientModeButton);
+		y += buttonH + rowGap;
+
+		if (colorEditMode == ColorEditMode.GRADIENT) {
+			gradientPreview = new GradientPreviewWidget(
+				fieldX,
+				y,
+				fieldWidth,
+				TextStylePanelLayout.metrics(1, 0, true).gradientPreviewHeight(),
+				() -> loreAccentColor,
+				() -> loreBaseColor
+			);
+			attach(gradientPreview, false);
+			y += gradientPreview.getHeight() + rowGap;
+
+			gradientStartButton = Button.builder(Component.translatable("screen.hologrammenu.text_style.gradient_start"), press -> {
+				gradientTarget = GradientTarget.START;
+				if (colorPicker != null) {
+					colorPicker.setColor(loreAccentColor);
+				}
+				relayout();
+				releaseButtonFocus(press);
+			}).bounds(fieldX, y, half, buttonH).build();
+			gradientEndButton = Button.builder(Component.translatable("screen.hologrammenu.text_style.gradient_end"), press -> {
+				gradientTarget = GradientTarget.END;
+				if (colorPicker != null) {
+					colorPicker.setColor(loreBaseColor);
+				}
+				relayout();
+				releaseButtonFocus(press);
+			}).bounds(fieldX + half + rowGap, y, half, buttonH).build();
+			attach(gradientStartButton);
+			attach(gradientEndButton);
+			markSelectionWidget(gradientTarget == GradientTarget.START ? gradientStartButton : gradientEndButton);
+			y += buttonH + rowGap;
+		}
+
+		attach(Button.builder(Component.translatable("screen.hologrammenu.anvil.effects_apply"), press -> {
+			applyLoreColorChoice(true);
+			loreColorTableOpen = false;
+			relayout();
+			applyLore();
+			releaseButtonFocus(press);
+		}).bounds(fieldX, y, half, buttonH).build());
+		attach(Button.builder(Component.translatable("gui.back"), press -> {
+			loreColorTableOpen = false;
+			relayout();
+			releaseButtonFocus(press);
+		}).bounds(fieldX + half + rowGap, y, half, buttonH).build());
 	}
 
 	private String loreParagraphText() {
@@ -1179,6 +1277,38 @@ public final class TextStyleOverlay {
 			loreParagraphDraft = loreParagraphDraft.withColor(color);
 		}
 		rebuildParagraphLoreFromDraft();
+	}
+
+	private void applyLoreColorChoice(boolean useStoredSelection) {
+		SelectionRange selection = useStoredSelection ? loreColorSelection : loreParagraphSelection();
+		if (!selection.hasSelection()) {
+			selection = new SelectionRange(0, loreParagraphDraft.text().length());
+		}
+		if (!selection.hasSelection()) {
+			return;
+		}
+		if (colorEditMode == ColorEditMode.GRADIENT) {
+			loreParagraphDraft = loreParagraphDraft.applyGradient(selection.start(), selection.end(), loreAccentColor, loreBaseColor);
+		} else {
+			loreParagraphDraft = loreParagraphDraft.applySolidColor(selection.start(), selection.end(), loreBaseColor);
+		}
+		rebuildParagraphLoreFromDraft();
+	}
+
+	private void setLorePickerColor(int rgb) {
+		int sanitized = rgb & 0xFFFFFF;
+		if (colorEditMode == ColorEditMode.GRADIENT && gradientTarget == GradientTarget.START) {
+			loreAccentColor = sanitized;
+		} else {
+			loreBaseColor = sanitized;
+		}
+		if (colorPicker != null && colorPicker.getColor() != sanitized) {
+			colorPicker.setColor(sanitized);
+		}
+	}
+
+	private int activeLoreGradientColor() {
+		return gradientTarget == GradientTarget.START ? loreAccentColor : loreBaseColor;
 	}
 
 	private void applyLoreDynamicStyleToSelection() {
