@@ -72,10 +72,10 @@ public class RpgEffectsScreen extends Screen {
 	}
 
 	private void addTabButton(int x, int y, int width, int height, SandboxTab tab, String labelKey) {
-		Button button = Button.builder(Component.translatable(labelKey), press -> {
+		Button button = iconButton(x, y, width, height, Component.translatable(labelKey), tabIcon(tab), press -> {
 			activeTab = tab;
 			refresh();
-		}).bounds(x, y, width, height).build();
+		});
 		if (activeTab == tab) {
 			ModUiSelectionState.markSelected(button);
 		}
@@ -110,13 +110,12 @@ public class RpgEffectsScreen extends Screen {
 		}
 
 		int actionY = top + 4 * (buttonHeight + rowGap) + ModPanelLayout.SECTION_GAP;
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.load_builder"), press -> {
+		addRenderableWidget(iconButton(left, actionY, half, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.load_builder"), new ItemStack(Items.CRAFTING_TABLE), press -> {
 			loadPreset(RpgEffectCatalog.byId(selectedPresetId));
 			activeTab = SandboxTab.BUILDER;
 			refresh();
-		}).bounds(left, actionY, half, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("gui.done"), press -> onClose())
-			.bounds(left + half + rowGap, actionY, half, buttonHeight).build());
+		}));
+		addRenderableWidget(iconButton(left + half + rowGap, actionY, half, buttonHeight, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> onClose()));
 	}
 
 	private void buildCreatedTab(int left, int top, int contentWidth) {
@@ -153,32 +152,31 @@ public class RpgEffectsScreen extends Screen {
 
 		int pageY = top + 4 * (buttonHeight + rowGap) + ModPanelLayout.SECTION_GAP;
 		int third = ModPanelLayout.columnWidth(contentWidth, 3, rowGap);
-		addRenderableWidget(Button.builder(Component.literal("<"), press -> {
+		addRenderableWidget(iconButton(left, pageY, third, buttonHeight, Component.literal("<"), new ItemStack(Items.ARROW), press -> {
 			customPage = Math.max(0, customPage - 1);
 			refresh();
-		}).bounds(left, pageY, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.page", customPage + 1, maxPage + 1), press -> {
+		}));
+		addRenderableWidget(iconButton(left + third + rowGap, pageY, third, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.page", customPage + 1, maxPage + 1), new ItemStack(Items.MAP), press -> {
 			customPage = customPage >= maxPage ? 0 : customPage + 1;
 			refresh();
-		}).bounds(left + third + rowGap, pageY, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.literal(">"), press -> {
+		}));
+		addRenderableWidget(iconButton(left + (third + rowGap) * 2, pageY, third, buttonHeight, Component.literal(">"), new ItemStack(Items.SPECTRAL_ARROW), press -> {
 			customPage = Math.min(maxPage, customPage + 1);
 			refresh();
-		}).bounds(left + (third + rowGap) * 2, pageY, third, buttonHeight).build());
+		}));
 
 		int actionY = pageY + buttonHeight + rowGap;
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.edit"), press -> {
+		addRenderableWidget(iconButton(left, actionY, third, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.edit"), new ItemStack(Items.NAME_TAG), press -> {
 			RpgCustomEffectStore.find(selectedCustomId).ifPresent(this::loadCustom);
 			activeTab = SandboxTab.BUILDER;
 			refresh();
-		}).bounds(left, actionY, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.delete"), press -> {
+		}));
+		addRenderableWidget(iconButton(left + third + rowGap, actionY, third, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.delete"), new ItemStack(Items.BARRIER), press -> {
 			RpgCustomEffectStore.remove(selectedCustomId);
 			selectedCustomId = "";
 			refresh();
-		}).bounds(left + third + rowGap, actionY, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("gui.done"), press -> onClose())
-			.bounds(left + (third + rowGap) * 2, actionY, third, buttonHeight).build());
+		}));
+		addRenderableWidget(iconButton(left + (third + rowGap) * 2, actionY, third, buttonHeight, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> onClose()));
 	}
 
 	private void buildBuilderTab(int left, int top, int contentWidth) {
@@ -206,28 +204,26 @@ public class RpgEffectsScreen extends Screen {
 		y += buttonHeight + rowGap;
 
 		int third = ModPanelLayout.columnWidth(formWidth, 3, rowGap);
-		addRenderableWidget(Button.builder(Component.literal("-"), press -> {
+		addRenderableWidget(iconButton(formLeft, y, third, buttonHeight, Component.literal("-"), new ItemStack(Items.REDSTONE), press -> {
 			draftLevel = RpgCustomEffectStore.clampLevel(draftLevel - 1);
 			refresh();
-		}).bounds(formLeft, y, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.preview_level", draftLevel), press -> {
+		}));
+		addRenderableWidget(iconButton(formLeft + third + rowGap, y, third, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.preview_level", draftLevel), new ItemStack(Items.EXPERIENCE_BOTTLE), press -> {
 			draftLevel = Math.min(draftMaxLevel, RpgCustomEffectStore.clampLevel(draftLevel + 1));
 			refresh();
-		}).bounds(formLeft + third + rowGap, y, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.literal("+"), press -> {
+		}));
+		addRenderableWidget(iconButton(formLeft + (third + rowGap) * 2, y, third, buttonHeight, Component.literal("+"), new ItemStack(Items.GLOWSTONE_DUST), press -> {
 			draftLevel = Math.min(draftMaxLevel, RpgCustomEffectStore.clampLevel(draftLevel + 1));
 			refresh();
-		}).bounds(formLeft + (third + rowGap) * 2, y, third, buttonHeight).build());
+		}));
 		y += buttonHeight + ModPanelLayout.SECTION_GAP;
 
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.save"), press -> saveDraft())
-			.bounds(formLeft, y, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("screen.hologrammenu.rpg_effects.new"), press -> {
+		addRenderableWidget(iconButton(formLeft, y, third, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.save"), new ItemStack(Items.EMERALD), press -> saveDraft()));
+		addRenderableWidget(iconButton(formLeft + third + rowGap, y, third, buttonHeight, Component.translatable("screen.hologrammenu.rpg_effects.new"), new ItemStack(Items.WRITABLE_BOOK), press -> {
 			clearDraft();
 			refresh();
-		}).bounds(formLeft + third + rowGap, y, third, buttonHeight).build());
-		addRenderableWidget(Button.builder(Component.translatable("gui.done"), press -> onClose())
-			.bounds(formLeft + (third + rowGap) * 2, y, third, buttonHeight).build());
+		}));
+		addRenderableWidget(iconButton(formLeft + (third + rowGap) * 2, y, third, buttonHeight, Component.translatable("gui.done"), new ItemStack(Items.EMERALD), press -> onClose()));
 	}
 
 	private EditBox addField(int x, int y, int width, String labelKey, String value, java.util.function.Consumer<String> responder) {
@@ -240,10 +236,10 @@ public class RpgEffectsScreen extends Screen {
 	}
 
 	private void addAdjustButton(int x, int y, int width, int height, String labelKey, int value, int step, ValueTarget target) {
-		addRenderableWidget(Button.builder(Component.translatable(labelKey, value), press -> {
+		addRenderableWidget(iconButton(x, y, width, height, Component.translatable(labelKey, value), valueIcon(target), press -> {
 			adjust(target, step);
 			refresh();
-		}).bounds(x, y, width, height).build());
+		}));
 	}
 
 	private void adjust(ValueTarget target, int delta) {
@@ -394,6 +390,27 @@ public class RpgEffectsScreen extends Screen {
 			UiScaleText.draw(graphics, this.font, entry, left, y, 0xCFCFCF, false);
 			y += UiScale.s(8);
 		}
+	}
+
+	private static Button iconButton(int x, int y, int width, int height, Component label, ItemStack icon, Button.OnPress onPress) {
+		return VanillaIconButton.create(x, y, width, height, label, icon, onPress);
+	}
+
+	private static ItemStack tabIcon(SandboxTab tab) {
+		return new ItemStack(switch (tab) {
+			case PRESETS -> Items.BOOKSHELF;
+			case BUILDER -> Items.CRAFTING_TABLE;
+			case CREATED -> Items.ENCHANTED_BOOK;
+		});
+	}
+
+	private static ItemStack valueIcon(ValueTarget target) {
+		return new ItemStack(switch (target) {
+			case LEVEL -> Items.EXPERIENCE_BOTTLE;
+			case MAX_LEVEL -> Items.BEACON;
+			case BASE -> Items.REDSTONE;
+			case SCALE -> Items.GLOWSTONE_DUST;
+		});
 	}
 
 	private static final String[] COLOR_CODE_INDEX = {
