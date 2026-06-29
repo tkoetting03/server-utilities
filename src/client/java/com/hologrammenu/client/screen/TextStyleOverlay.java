@@ -70,7 +70,7 @@ public final class TextStyleOverlay {
 	private final TextStyleTarget target;
 	private final Supplier<int[]> panelPositionSupplier;
 	private final Supplier<ItemStack> anvilStackSupplier;
-	private final boolean showEffectsTab;
+	private final EditorEffectsMode effectsMode;
 	private final ScreenInvoker screenInvoker;
 	private final List<GuiEventListener> widgets = new ArrayList<>();
 	private final List<TextPart> parts = new ArrayList<>();
@@ -193,7 +193,7 @@ public final class TextStyleOverlay {
 		TextStyleTarget target,
 		Supplier<int[]> panelPositionSupplier
 	) {
-		this(parent, plainTextSupplier, target, panelPositionSupplier, null, false);
+		this(parent, plainTextSupplier, target, panelPositionSupplier, null, EditorEffectsMode.NONE);
 	}
 
 	public static TextStyleOverlay forAnvil(
@@ -203,7 +203,7 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> stackSupplier
 	) {
-		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, true);
+		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, EditorEffectsMode.ALL);
 	}
 
 	public static TextStyleOverlay forItemStyler(
@@ -213,7 +213,7 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> stackSupplier
 	) {
-		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, false);
+		return new TextStyleOverlay(parent, plainTextSupplier, target, panelPositionSupplier, stackSupplier, EditorEffectsMode.ENCHANTS_ONLY);
 	}
 
 	public TextStyleOverlay(
@@ -223,7 +223,7 @@ public final class TextStyleOverlay {
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> anvilStackSupplier
 	) {
-		this(parent, plainTextSupplier, target, panelPositionSupplier, anvilStackSupplier, anvilStackSupplier != null);
+		this(parent, plainTextSupplier, target, panelPositionSupplier, anvilStackSupplier, anvilStackSupplier != null ? EditorEffectsMode.ALL : EditorEffectsMode.NONE);
 	}
 
 	private TextStyleOverlay(
@@ -232,14 +232,14 @@ public final class TextStyleOverlay {
 		TextStyleTarget target,
 		Supplier<int[]> panelPositionSupplier,
 		Supplier<ItemStack> anvilStackSupplier,
-		boolean showEffectsTab
+		EditorEffectsMode effectsMode
 	) {
 		this.parent = parent;
 		this.plainTextSupplier = plainTextSupplier;
 		this.target = target;
 		this.panelPositionSupplier = panelPositionSupplier;
 		this.anvilStackSupplier = anvilStackSupplier;
-		this.showEffectsTab = showEffectsTab;
+		this.effectsMode = effectsMode;
 		this.screenInvoker = (ScreenInvoker) parent;
 	}
 
@@ -348,7 +348,7 @@ public final class TextStyleOverlay {
 		}
 
 		if (isAnvilMode()) {
-			anvilActiveTab = restoredTab == AnvilEditorTab.EFFECTS && !showEffectsTab ? AnvilEditorTab.STYLE : restoredTab;
+			anvilActiveTab = restoredTab == AnvilEditorTab.EFFECTS && effectsMode == EditorEffectsMode.NONE ? AnvilEditorTab.STYLE : restoredTab;
 			anvilStyleFocus = AnvilStyleFocus.RENAME;
 		}
 		draft = savedDraft.withText(stylePlainTextSupplier().get());
@@ -772,7 +772,7 @@ public final class TextStyleOverlay {
 		int tabY = panelY + ModPanelLayout.CONTENT_TOP;
 		int tabGap = ModPanelLayout.ROW_GAP;
 		int tabHeight = AnvilEditorMetrics.tabButtonHeight();
-		int tabCount = showEffectsTab ? 3 : 2;
+		int tabCount = effectsMode == EditorEffectsMode.NONE ? 2 : 3;
 		int tabWidth = ModPanelLayout.columnWidth(contentWidth, tabCount, tabGap);
 		anvilStyleTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.tab.style"), press -> {
 				switchAnvilTab(AnvilEditorTab.STYLE);
@@ -788,8 +788,11 @@ public final class TextStyleOverlay {
 			.build();
 		attach(anvilStyleTabButton);
 		attach(anvilLoreTabButton);
-		if (showEffectsTab) {
-			anvilEffectsTabButton = Button.builder(Component.translatable("screen.hologrammenu.anvil.tab.effects"), press -> {
+		if (effectsMode != EditorEffectsMode.NONE) {
+			String labelKey = effectsMode == EditorEffectsMode.ENCHANTS_ONLY
+				? "screen.hologrammenu.anvil.effects_tab.enchants"
+				: "screen.hologrammenu.anvil.tab.effects";
+			anvilEffectsTabButton = Button.builder(Component.translatable(labelKey), press -> {
 					switchAnvilTab(AnvilEditorTab.EFFECTS);
 					releaseButtonFocus(press);
 				})
@@ -805,7 +808,7 @@ public final class TextStyleOverlay {
 		if (!isAnvilMode() || anvilActiveTab == tab) {
 			return;
 		}
-		if (tab == AnvilEditorTab.EFFECTS && !showEffectsTab) {
+		if (tab == AnvilEditorTab.EFFECTS && effectsMode == EditorEffectsMode.NONE) {
 			return;
 		}
 		if (anvilActiveTab == AnvilEditorTab.STYLE) {
@@ -1334,6 +1337,11 @@ public final class TextStyleOverlay {
 	}
 
 	private void buildEffectsWidgets(int panelX, int panelY) {
+		if (effectsMode == EditorEffectsMode.ENCHANTS_ONLY) {
+			effectsSubTab = EffectsSubTab.ENCHANTS;
+			buildVanillaEnchantWidgets(panelX, panelY);
+			return;
+		}
 		int left = panelX + ModPanelLayout.PANEL_PADDING;
 		int contentWidth = ModPanelLayout.CONTENT_WIDTH;
 		int buttonH = UiLayoutHelper.defaultButtonHeight();
@@ -2503,6 +2511,12 @@ public final class TextStyleOverlay {
 		ENCHANTS,
 		SWORD,
 		ARMOR
+	}
+
+	private enum EditorEffectsMode {
+		NONE,
+		ENCHANTS_ONLY,
+		ALL
 	}
 
 	private enum LoreDynamicStyle {
