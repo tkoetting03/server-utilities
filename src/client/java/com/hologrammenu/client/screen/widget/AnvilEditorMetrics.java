@@ -47,7 +47,7 @@ public final class AnvilEditorMetrics {
 	}
 
 	public static int loreParagraphHeight(int lineCount) {
-		int lines = Math.max(3, Math.min(StorageMenuItemLore.MAX_LINES, lineCount));
+		int lines = Math.max(5, Math.min(StorageMenuItemLore.MAX_LINES, lineCount));
 		return UiScale.s(10) + lines * UiScale.s(9);
 	}
 

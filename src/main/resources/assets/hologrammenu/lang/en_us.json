@@ -128,7 +128,7 @@
   "screen.hologrammenu.anvil.lore_line": "Line %s",
   "screen.hologrammenu.anvil.lore_line_hint": "Description text",
   "screen.hologrammenu.anvil.lore_paragraph": "Paragraph description",
-  "screen.hologrammenu.anvil.lore_paragraph_hint": "Write a full item description; the tool wraps and styles it",
+  "screen.hologrammenu.anvil.lore_paragraph_hint": "Enter lore text. Enter creates a new line.",
   "screen.hologrammenu.anvil.lore_expand_style": "Edit Line Style",
   "screen.hologrammenu.anvil.lore_regenerate": "Rebuild Lines",
   "screen.hologrammenu.anvil.lore_preview": "Lines: %s",

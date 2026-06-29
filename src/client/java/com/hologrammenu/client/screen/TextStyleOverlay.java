@@ -1087,7 +1087,7 @@ public final class TextStyleOverlay {
 				plainLines.add(plain);
 			}
 		}
-		return String.join(" ", plainLines);
+		return String.join("\n", plainLines);
 	}
 
 	private void ensureLoreParagraphDraft() {
@@ -1108,7 +1108,7 @@ public final class TextStyleOverlay {
 				continue;
 			}
 			if (!spans.isEmpty()) {
-				spans.add(StyledSpan.plain(" "));
+				spans.add(StyledSpan.plain("\n"));
 			}
 			EnumSet<StyledText.Effect> effects = styled.effects();
 			for (StyledSpan span : styled.spans()) {
@@ -1141,10 +1141,39 @@ public final class TextStyleOverlay {
 
 	private List<StyledText> wrapLoreParagraph(StyledText paragraph, int wrapWidth) {
 		String text = paragraph.text();
-		if (text == null || text.isBlank()) {
+		if (text == null || text.isEmpty()) {
 			return List.of(StyledText.EMPTY);
 		}
-		List<WordRange> words = paragraphWords(text);
+		List<StyledText> wrappedLines = new ArrayList<>();
+		int lineStart = 0;
+		int index = 0;
+		while (index <= text.length()) {
+			if (index == text.length() || text.charAt(index) == '\n' || text.charAt(index) == '\r') {
+				wrappedLines.addAll(wrapLoreHardLine(paragraph, lineStart, index, wrapWidth));
+				if (wrappedLines.size() >= StorageMenuItemLore.MAX_LINES || index == text.length()) {
+					break;
+				}
+				if (text.charAt(index) == '\r' && index + 1 < text.length() && text.charAt(index + 1) == '\n') {
+					index++;
+				}
+				lineStart = index + 1;
+			}
+			index++;
+		}
+		if (wrappedLines.isEmpty()) {
+			return List.of(StyledText.EMPTY);
+		}
+		return wrappedLines.size() > StorageMenuItemLore.MAX_LINES
+			? wrappedLines.subList(0, StorageMenuItemLore.MAX_LINES)
+			: wrappedLines;
+	}
+
+	private List<StyledText> wrapLoreHardLine(StyledText paragraph, int start, int end, int wrapWidth) {
+		String text = paragraph.text();
+		if (start >= end || text.substring(start, end).isBlank()) {
+			return List.of(StyledText.EMPTY);
+		}
+		List<WordRange> words = paragraphWords(text, start, end);
 		List<List<WordRange>> lines = new ArrayList<>();
 		List<WordRange> current = new ArrayList<>();
 		int currentLength = 0;
@@ -1170,15 +1199,16 @@ public final class TextStyleOverlay {
 		return lines.stream().map(line -> styledLineFromWords(paragraph, line)).toList();
 	}
 
-	private List<WordRange> paragraphWords(String text) {
+	private List<WordRange> paragraphWords(String text, int startIndex, int endIndex) {
 		List<WordRange> words = new ArrayList<>();
-		int index = 0;
-		while (index < text.length()) {
-			while (index < text.length() && Character.isWhitespace(text.charAt(index))) {
+		int index = Math.max(0, startIndex);
+		int limit = Math.max(index, Math.min(text.length(), endIndex));
+		while (index < limit) {
+			while (index < limit && Character.isWhitespace(text.charAt(index))) {
 				index++;
 			}
 			int start = index;
-			while (index < text.length() && !Character.isWhitespace(text.charAt(index))) {
+			while (index < limit && !Character.isWhitespace(text.charAt(index))) {
 				index++;
 			}
 			if (index > start) {
