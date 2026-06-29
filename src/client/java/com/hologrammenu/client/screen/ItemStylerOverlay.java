@@ -91,10 +91,9 @@ public final class ItemStylerOverlay {
 		screenInvoker.hologrammenu$addRenderableWidget(styleButton);
 		ModUiRenderContext.markIfInteractive(styleButton);
 
-		boolean hasItem = !styledStack().isEmpty();
-		nameField.active = hasItem;
-		confirmButton.active = hasItem;
-		styleButton.active = hasItem;
+		nameField.active = true;
+		confirmButton.active = true;
+		styleButton.active = true;
 	}
 
 	private void toggleStylePanel() {
