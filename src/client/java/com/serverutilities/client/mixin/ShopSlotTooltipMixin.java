@@ -38,7 +38,7 @@ public abstract class ShopSlotTooltipMixin {
 		VirtualStorageContainer container = VirtualStorageContainer.asVirtual(
 			StorageMenuLocator.extractContainer(((AbstractContainerScreen<?>) (Object) this).getMenu())
 		);
-		if (container == null || !container.viewContext().isRoot()) {
+		if (container == null) {
 			return;
 		}
 

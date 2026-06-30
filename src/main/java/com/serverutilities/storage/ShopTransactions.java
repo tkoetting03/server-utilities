@@ -60,7 +60,7 @@ public final class ShopTransactions {
 			return true;
 		}
 
-		ItemStack product = listing.product().copy();
+		ItemStack product = new ItemStack(listing.product().getItem(), listing.product().getCount());
 		if (!player.getInventory().add(product)) {
 			player.drop(product, false);
 		}
