@@ -30,6 +30,8 @@ import java.util.UUID;
 public final class HologramAssociationHighlighter {
 	private static final int BLOCK_OUTLINE_COLOR = 0xFFFFFF4A;
 	private static final int BLOCK_OUTLINE_GLOW_COLOR = 0x88FFF36A;
+	private static final float BLOCK_OUTLINE_LINE_WIDTH = 10.0F;
+	private static final float BLOCK_OUTLINE_GLOW_LINE_WIDTH = 12.0F;
 	private static final int ITEM_OUTLINE_COLOR = 0xFF55FFFF;
 	private static final int ITEM_OUTLINE_GLOW_COLOR = 0x8855FFFF;
 	private static final double MAX_HOLOGRAM_DISTANCE_SQ = 96.0D * 96.0D;
@@ -68,7 +70,7 @@ public final class HologramAssociationHighlighter {
 			});
 		}
 
-		if (ClientSettings.hologramEditModeEnabled) {
+		if (ClientSettings.placementModeEnabled || ClientSettings.hologramEditModeEnabled) {
 			for (Entity entity : level.entitiesForRendering()) {
 				if (!(entity instanceof Display.TextDisplay display) || !LateHologramRenderer.isManagedHologram(display)) {
 					continue;
@@ -180,7 +182,7 @@ public final class HologramAssociationHighlighter {
 			-cameraPos.y(),
 			-cameraPos.z(),
 			glowColor,
-			10.0F
+			BLOCK_OUTLINE_GLOW_LINE_WIDTH
 		);
 		ShapeRenderer.renderShape(
 			poseStack,
@@ -190,7 +192,7 @@ public final class HologramAssociationHighlighter {
 			pos.getY() - cameraPos.y(),
 			pos.getZ() - cameraPos.z(),
 			color,
-			8.0F
+			BLOCK_OUTLINE_LINE_WIDTH
 		);
 	}
 

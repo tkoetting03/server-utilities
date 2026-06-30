@@ -672,7 +672,7 @@ public final class StorageMenuEditorOverlay {
 	}
 
 	private boolean canEditShop() {
-		return viewContext.isRoot();
+		return true;
 	}
 
 	private void buildMenuWidgets(int panelX, int panelY, int pad, int contentWidth) {

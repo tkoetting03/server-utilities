@@ -163,8 +163,7 @@ public class HotkeyHubScreen extends Screen {
 	) {
 		Button button = VanillaIconButton.create(x, y, width, height, toggleLabel(labelKey, enabled.getAsBoolean()), icon, press -> {
 			onToggle.run();
-			press.setMessage(toggleLabel(labelKey, enabled.getAsBoolean()));
-			updateToggleOutline(press, enabled.getAsBoolean());
+			init();
 		});
 		updateToggleOutline(button, enabled.getAsBoolean());
 		return button;

@@ -18,12 +18,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -106,8 +103,7 @@ public final class HologramClientEditInteractions {
 			if (!HologramClientRegistry.isEditableHologram(candidate)) {
 				continue;
 			}
-			Optional<BlockPos> associatedBlock = HologramHelper.associatedBlock(candidate)
-				.or(() -> nearestAssociatedBlock(client.level, candidate.position()));
+			Optional<BlockPos> associatedBlock = HologramHelper.associatedBlock(candidate);
 			if (associatedBlock.isEmpty() || !associatedBlock.get().equals(blockPos)) {
 				continue;
 			}
@@ -138,33 +134,6 @@ public final class HologramClientEditInteractions {
 			}
 		}
 		return candidates;
-	}
-
-	private static Optional<BlockPos> nearestAssociatedBlock(net.minecraft.client.multiplayer.ClientLevel level, Vec3 position) {
-		BlockPos origin = BlockPos.containing(position);
-		BlockPos best = null;
-		double bestDistance = Double.MAX_VALUE;
-		for (int dy = LEGACY_BLOCK_SEARCH_UP; dy >= -LEGACY_BLOCK_SEARCH_DOWN; dy--) {
-			for (int dx = -LEGACY_BLOCK_SEARCH_RADIUS; dx <= LEGACY_BLOCK_SEARCH_RADIUS; dx++) {
-				for (int dz = -LEGACY_BLOCK_SEARCH_RADIUS; dz <= LEGACY_BLOCK_SEARCH_RADIUS; dz++) {
-					BlockPos pos = origin.offset(dx, dy, dz);
-					BlockState state = level.getBlockState(pos);
-					if (state.isAir()) {
-						continue;
-					}
-					VoxelShape shape = state.getShape(level, pos);
-					if (shape.isEmpty()) {
-						continue;
-					}
-					double distance = Vec3.atCenterOf(pos).distanceToSqr(position);
-					if (distance < bestDistance) {
-						bestDistance = distance;
-						best = pos.immutable();
-					}
-				}
-			}
-		}
-		return Optional.ofNullable(best);
 	}
 
 	private static InteractionResult openOptionsScreen(Entity entity) {

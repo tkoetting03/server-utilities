@@ -66,6 +66,9 @@ public final class ClientNetworkHandler {
 				if (client.screen != null && StorageMenuEditorOverlay.getActive(client.screen) != null) {
 					EditorMousePreservation.restoreIfPending();
 				}
+				if (payload.menu().viewContext().isRoot() && !payload.menu().enabled()) {
+					StorageMenuAssociatedBlocks.forget(payload.menu().viewContext().anchorPos());
+				}
 				StorageMenuEditorOverlay.handleSync(payload.menu());
 			});
 		});

@@ -1,10 +1,14 @@
 package com.hologrammenu.network;
 
 import com.hologrammenu.HologramMenuMod;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.Optional;
 
 public final class ModPackets {
 	public record HologramEditPayload(int entityId, String action, String lines) implements CustomPacketPayload {
@@ -58,14 +62,22 @@ public final class ModPackets {
 		}
 	}
 
-	public record HologramPlacePayload(String text) implements CustomPacketPayload {
+	public record HologramPlacePayload(String text, Vec3 position, Optional<BlockPos> blockPos) implements CustomPacketPayload {
 		public static final CustomPacketPayload.Type<HologramPlacePayload> TYPE =
 			new CustomPacketPayload.Type<>(HologramMenuMod.id("hologram_place"));
 		public static final StreamCodec<RegistryFriendlyByteBuf, HologramPlacePayload> CODEC = StreamCodec.composite(
 			ByteBufCodecs.STRING_UTF8,
 			HologramPlacePayload::text,
+			Vec3.STREAM_CODEC,
+			HologramPlacePayload::position,
+			ByteBufCodecs.optional(BlockPos.STREAM_CODEC),
+			HologramPlacePayload::blockPos,
 			HologramPlacePayload::new
 		);
+
+		public HologramPlacePayload(String text) {
+			this(text, Vec3.ZERO, Optional.empty());
+		}
 
 		@Override
 		public Type<? extends CustomPacketPayload> type() {

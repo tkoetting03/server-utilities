@@ -20,7 +20,7 @@ public final class StorageMenuAssociatedBlocks {
 
 	public static void forget(BlockPos pos) {
 		if (pos != null) {
-			KNOWN.remove(pos);
+			KNOWN.remove(pos.immutable());
 		}
 	}
 

@@ -164,7 +164,7 @@ public final class HologramHelper {
 		UUID groupId = HologramLineStack.groupId(selected);
 		List<Display.TextDisplay> group = groupId == null ? List.of(selected) : findGroup(level, groupId);
 		Vec3 anchor = baseAnchorPosition(group.isEmpty() ? List.of(selected) : group);
-		Association association = readAssociation(selected).orElseGet(() -> resolveAssociation(level, anchor));
+		Association association = readAssociation(selected).orElse(null);
 		for (Display.TextDisplay display : group) {
 			HologramSync.untrack(level, display);
 			display.discard();
@@ -204,7 +204,7 @@ public final class HologramHelper {
 			if (!(entity instanceof Display.TextDisplay display) || !isEditableHologram(display)) {
 				continue;
 			}
-			Optional<BlockPos> associated = associatedBlock(display).or(() -> nearestAssociatedBlock(level, display.position()));
+			Optional<BlockPos> associated = associatedBlock(display);
 			if (associated.isEmpty() || !associated.get().equals(blockPos)) {
 				continue;
 			}

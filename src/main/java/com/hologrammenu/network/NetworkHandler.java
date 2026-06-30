@@ -177,9 +177,11 @@ public final class NetworkHandler {
 			text = text.substring(0, MAX_PLACEMENT_TEXT_LENGTH);
 		}
 
-		var target = HologramHelper.pickPlacementTarget(player, HologramHelper.WAND_MAX_DISTANCE);
-		List<Display.TextDisplay> displays = HologramHelper.create((ServerLevel) player.level(), target.position(), HologramLineStack.defaults(text));
-		target.blockPos().ifPresent(pos -> displays.forEach(display -> HologramHelper.tagAssociatedBlock(display, pos)));
+		var fallbackTarget = HologramHelper.pickPlacementTarget(player, HologramHelper.WAND_MAX_DISTANCE);
+		var position = payload.position() != null ? payload.position() : fallbackTarget.position();
+		var blockPos = payload.blockPos().isPresent() ? payload.blockPos() : fallbackTarget.blockPos();
+		List<Display.TextDisplay> displays = HologramHelper.create((ServerLevel) player.level(), position, HologramLineStack.defaults(text));
+		blockPos.ifPresent(pos -> displays.forEach(display -> HologramHelper.tagAssociatedBlock(display, pos)));
 		player.sendSystemMessage(Component.translatable("hud.hologrammenu.placement.placed", text));
 	}
 

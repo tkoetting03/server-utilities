@@ -6,8 +6,14 @@ import com.hologrammenu.network.ModPackets;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.Optional;
 
 public final class HologramClientInteractions {
 	private HologramClientInteractions() {
@@ -27,7 +33,7 @@ public final class HologramClientInteractions {
 			if (level.getBlockState(hitResult.getBlockPos()).isAir()) {
 				return InteractionResult.PASS;
 			}
-			return sendPlacementPacket();
+			return sendPlacementPacket(player, hitResult);
 		});
 
 		UseItemCallback.EVENT.register((player, level, hand) -> {
@@ -48,7 +54,7 @@ public final class HologramClientInteractions {
 				return InteractionResult.PASS;
 			}
 
-			return sendPlacementPacket();
+			return sendPlacementPacket(player, hit);
 		});
 	}
 
@@ -58,8 +64,30 @@ public final class HologramClientInteractions {
 			|| ClientSettings.hologramEditModeEnabled;
 	}
 
-	private static InteractionResult sendPlacementPacket() {
-		ClientPlayNetworking.send(new ModPackets.HologramPlacePayload(ClientSettings.defaultPlacementText));
+	private static InteractionResult sendPlacementPacket(Player player, HitResult hitResult) {
+		var target = buildPlacementTarget(player, hitResult);
+		ClientPlayNetworking.send(new ModPackets.HologramPlacePayload(
+			ClientSettings.defaultPlacementText,
+			target.position(),
+			target.blockPos()
+		));
 		return InteractionResult.SUCCESS;
+	}
+
+	private static HologramTarget buildPlacementTarget(Player player, HitResult hitResult) {
+		if (hitResult.getType() == HitResult.Type.BLOCK) {
+			BlockHitResult blockHit = (BlockHitResult) hitResult;
+			Vec3 offset = new Vec3(
+				blockHit.getDirection().getStepX(),
+				blockHit.getDirection().getStepY(),
+				blockHit.getDirection().getStepZ()
+			).scale(0.05D);
+			return new HologramTarget(blockHit.getLocation().add(offset), Optional.of(blockHit.getBlockPos()));
+		}
+		var fallback = HologramHelper.pickPlacementTarget(player, HologramHelper.WAND_MAX_DISTANCE);
+		return new HologramTarget(fallback.position(), fallback.blockPos());
+	}
+
+	private record HologramTarget(Vec3 position, Optional<BlockPos> blockPos) {
 	}
 }
