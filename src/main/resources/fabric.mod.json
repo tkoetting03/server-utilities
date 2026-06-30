@@ -1,27 +1,27 @@
 {
 	"schemaVersion": 1,
-	"id": "hologrammenu",
+	"id": "serverutilities",
 	"version": "${version}",
-	"name": "Hologram Menu Mod",
+	"name": "Server Utilities Mod",
 	"description": "Create persistent text holograms, interactive menus with container popups, and anvil text styling.",
-	"icon": "assets/hologrammenu/icon.png",
+	"icon": "assets/serverutilities/icon.png",
 	"authors": [
-		"HologramMenu"
+		"URLTK"
 	],
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.hologrammenu.HologramMenuMod"
+			"com.serverutilities.ServerUtilitiesMod"
 		],
 		"client": [
-			"com.hologrammenu.client.HologramMenuClient"
+			"com.serverutilities.client.ServerUtilitiesClient"
 		]
 	},
 	"mixins": [
-		"hologrammenu.mixins.json",
+		"serverutilities.mixins.json",
 		{
-			"config": "hologrammenu.client.mixins.json",
+			"config": "serverutilities.client.mixins.json",
 			"environment": "client"
 		}
 	],
