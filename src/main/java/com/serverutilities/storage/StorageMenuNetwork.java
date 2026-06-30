@@ -127,10 +127,10 @@ public final class StorageMenuNetwork {
 				.filter(config -> config.type().isEditable())
 				.map(SlotData::fromConfig)
 				.toList();
-			List<ShopListingData> listings = viewContext.isRoot() && shop != null
+			List<ShopListingData> listings = shop != null
 				? shop.asList().stream().map(ShopListingData::fromListing).toList()
 				: List.of();
-			boolean shopEnabled = viewContext.isRoot() && shop != null && shop.enabled();
+			boolean shopEnabled = shop != null && shop.enabled();
 			return new MenuData(
 				viewContext.anchorPos(),
 				viewContext.subMenuId() == null ? StorageMenuViewContext.NO_SUB_MENU : viewContext.subMenuId(),

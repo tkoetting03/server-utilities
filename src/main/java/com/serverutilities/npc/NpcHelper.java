@@ -156,9 +156,13 @@ public final class NpcHelper {
 			if (skinName != null && !skinName.isBlank()) {
 				String trimmed = skinName.trim();
 				entity.addTag(SKIN_TAG_PREFIX + trimmed);
-				SkinProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
-					((MannequinAccessor) mannequin).serverutilities$setProfile(profile)
-				);
+				if (entity.level() instanceof ServerLevel serverLevel) {
+					SkinProfileHelper.resolveSkinAsync(serverLevel.getServer(), mannequin, trimmed);
+				} else {
+					SkinProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
+						((MannequinAccessor) mannequin).serverutilities$setProfile(profile)
+					);
+				}
 			}
 		}
 		if (entity instanceof Villager villager) {
@@ -200,9 +204,7 @@ public final class NpcHelper {
 		if (skinName != null && !skinName.isBlank()) {
 			String trimmed = skinName.trim();
 			mannequin.addTag(SKIN_TAG_PREFIX + trimmed);
-			SkinProfileHelper.resolveSkin(trimmed).ifPresent(profile ->
-				((MannequinAccessor) mannequin).serverutilities$setProfile(profile)
-			);
+			SkinProfileHelper.resolveSkinAsync(level.getServer(), mannequin, trimmed);
 		}
 		((MannequinAccessor) mannequin).serverutilities$setImmovable(true);
 		((MannequinAccessor) mannequin).serverutilities$setHideDescription(true);

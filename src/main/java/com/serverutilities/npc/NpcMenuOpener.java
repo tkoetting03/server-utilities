@@ -114,9 +114,9 @@ public final class NpcMenuOpener {
 	public static void openView(ServerPlayer player, LivingEntity npc, StorageMenuViewContext viewContext, int containerSize) {
 		ServerLevel level = (ServerLevel) player.level();
 		StorageMenuDefinition definition = resolveDefinition(level, viewContext, npc, containerSize);
-		ShopDefinition shop = viewContext.isRoot()
-			? NpcMenuStore.get(level, npc.getUUID()).map(StorageMenuBlockData::shop).orElse(ShopDefinition.EMPTY)
-			: ShopDefinition.EMPTY;
+		ShopDefinition shop = NpcMenuStore.get(level, npc.getUUID())
+			.map(StorageMenuBlockData::shop)
+			.orElse(ShopDefinition.EMPTY);
 		Container validitySource = new NpcEntityValidityContainer(npc);
 		player.openMenu(new MenuProvider() {
 			@Override

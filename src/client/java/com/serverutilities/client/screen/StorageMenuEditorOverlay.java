@@ -801,10 +801,17 @@ public final class StorageMenuEditorOverlay {
 		scheduleRebuild();
 	}
 
+	private Component seeThroughButtonLabel() {
+		return Component.translatable(hologramSettings.seeThroughWalls()
+			? "screen.serverutilities.hologram_options.see_through_on"
+			: "screen.serverutilities.hologram_options.see_through_off");
+	}
+
 	private void buildHologramSettingsPanel(int editorX, int editorY) {
 		int buttonH = UiLayoutHelper.defaultButtonHeight();
 		int gap = ModPanelLayout.ROW_GAP;
 		int panelHeight = StorageMenuHologramSettingsPanelWidget.CONTENT_TOP
+			+ buttonH + gap
 			+ buttonH + gap
 			+ buttonH + gap
 			+ buttonH
@@ -846,6 +853,16 @@ public final class StorageMenuEditorOverlay {
 			() -> {
 			}
 		), true);
+		y += buttonH + gap;
+
+		attach(Button.builder(
+			seeThroughButtonLabel(),
+			press -> {
+				hologramSettings = hologramSettings.withSeeThroughWalls(!hologramSettings.seeThroughWalls());
+				press.setMessage(seeThroughButtonLabel());
+				autoApply();
+			}
+		).bounds(x, y, width, buttonH).build(), true);
 		y += buttonH + gap;
 
 		attach(VanillaIconButton.create(

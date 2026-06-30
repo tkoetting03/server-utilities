@@ -101,12 +101,16 @@ public final class HologramHelper {
 	}
 
 	public static Display.TextDisplay createStorageLabel(ServerLevel level, Vec3 position, Component text, float scale) {
+		return createStorageLabel(level, position, text, scale, true);
+	}
+
+	public static Display.TextDisplay createStorageLabel(ServerLevel level, Vec3 position, Component text, float scale, boolean seeThroughWalls) {
 		Display.TextDisplay display = new Display.TextDisplay(EntityType.TEXT_DISPLAY, level);
 		display.setPos(position.x, position.y, position.z);
 		display.setNoGravity(true);
 		display.setInvulnerable(true);
 		display.addTag(StorageMenuHologramLabels.STORAGE_LABEL_TAG);
-		setText(display, text, scale);
+		setText(display, text, scale, seeThroughWalls);
 		level.addFreshEntity(display);
 		return display;
 	}

@@ -190,11 +190,11 @@ public final class StorageMenuNetworkHandler {
 		} else {
 			definition = ensureLinkSubMenus(level, definition, menuData.containerSize());
 			StorageSubMenuManager.save(level, viewContext.subMenuId(), definition);
+			StorageMenuManager.saveShop(level, pos, menuData.toShopDefinition());
+			com.serverutilities.storage.StorageMenuLiveRefresh.refreshViewers(level, pos, StorageMenuManager.get(level, pos).orElse(definition));
 		}
 
-		ShopDefinition savedShop = viewContext.isRoot()
-			? StorageMenuManager.getShop(level, pos).orElse(ShopDefinition.EMPTY)
-			: ShopDefinition.EMPTY;
+		ShopDefinition savedShop = StorageMenuManager.getShop(level, pos).orElse(ShopDefinition.EMPTY);
 		ServerPlayNetworking.send(player, new ModPackets.StorageMenuSyncPayload(
 			StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, menuData.invulnerable(), menuData.hologramLabel(), menuData.hologramSettings(), savedShop)
 		));
@@ -223,11 +223,10 @@ public final class StorageMenuNetworkHandler {
 		} else {
 			definition = ensureLinkSubMenus(level, definition, menuData.containerSize());
 			StorageSubMenuManager.save(level, viewContext.subMenuId(), definition);
+			NpcMenuManager.saveShop(level, entityId, menuData.toShopDefinition());
 		}
 
-		ShopDefinition savedShop = viewContext.isRoot()
-			? NpcMenuManager.getShop(level, entityId).orElse(ShopDefinition.EMPTY)
-			: ShopDefinition.EMPTY;
+		ShopDefinition savedShop = NpcMenuManager.getShop(level, entityId).orElse(ShopDefinition.EMPTY);
 		ServerPlayNetworking.send(player, new ModPackets.StorageMenuSyncPayload(
 			StorageMenuNetwork.MenuData.fromDefinition(viewContext, definition, menuData.invulnerable(), menuData.hologramLabel(), savedShop)
 		));

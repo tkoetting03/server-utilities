@@ -121,7 +121,7 @@ public final class LateHologramRenderer {
 				shadow,
 				pose,
 				bufferSource,
-				Font.DisplayMode.SEE_THROUGH,
+				seeThrough ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL,
 				0,
 				FULL_BRIGHT
 			);

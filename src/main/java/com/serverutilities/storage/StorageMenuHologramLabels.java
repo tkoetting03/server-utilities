@@ -31,15 +31,15 @@ public final class StorageMenuHologramLabels {
 
 		StorageMenuHologramSettings resolved = settings == null ? StorageMenuHologramSettings.DEFAULT : settings;
 		Vec3 position = Vec3.atCenterOf(pos).add(0.0D, LABEL_Y_OFFSET + resolved.heightOffset(), 0.0D);
-		Display.TextDisplay display = HologramHelper.createStorageLabel(level, position, TextFormats.toComponent(text.trim()), resolved.scale());
+		Display.TextDisplay display = HologramHelper.createStorageLabel(level, position, TextFormats.toComponent(text.trim()), resolved.scale(), resolved.seeThroughWalls());
 		HologramHelper.tagAssociatedBlock(display, pos);
 	}
 
 	public static void remove(ServerLevel level, BlockPos pos) {
 		BlockPos immutablePos = pos.immutable();
-		AABB box = new AABB(immutablePos).inflate(0.5D, 1.5D, 0.5D);
+		AABB box = new AABB(immutablePos).inflate(5.0D, 25.0D, 5.0D);
 		for (Display.TextDisplay display : level.getEntities(EntityType.TEXT_DISPLAY, box, StorageMenuHologramLabels::isStorageLabel)) {
-			if (display.blockPosition().distSqr(immutablePos) <= 2) {
+			if (immutablePos.equals(HologramHelper.associatedBlock(display).orElse(null))) {
 				HologramSync.untrack(level, display);
 				display.discard();
 			}

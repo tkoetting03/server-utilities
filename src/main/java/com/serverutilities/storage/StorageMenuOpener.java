@@ -151,12 +151,9 @@ public final class StorageMenuOpener {
 		BlockEntity typeSource,
 		ServerPlayer serverPlayer
 	) {
-		ShopDefinition shop = ShopDefinition.EMPTY;
-		if (viewContext.isRoot()) {
-			shop = StorageMenuBlockStore.get(level, viewContext.anchorPos())
-				.map(StorageMenuBlockData::shop)
-				.orElse(ShopDefinition.EMPTY);
-		}
+		ShopDefinition shop = StorageMenuBlockStore.get(level, viewContext.anchorPos())
+			.map(StorageMenuBlockData::shop)
+			.orElse(ShopDefinition.EMPTY);
 		if (serverPlayer != null) {
 			definition = StorageMenuChrome.applyRuntimeChrome(definition, serverPlayer);
 			StorageMenuNetworkHandler.sendContext(serverPlayer, viewContext);

@@ -23,6 +23,8 @@ public class ServerUtilitiesMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+
+
 		HologramInteractions.register();
 		HologramPlacementHandler.register();
 		NpcPlacementHandler.register();

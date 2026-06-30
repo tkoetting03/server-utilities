@@ -17,9 +17,7 @@ public final class ShopTransactions {
 		VirtualStorageContainer container,
 		int slotIndex
 	) {
-		if (!container.viewContext().isRoot()) {
-			return false;
-		}
+
 
 		Optional<StorageMenuBlockData> blockData = StorageMenuBlockStore.get(level, container.blockPos());
 		if (blockData.isEmpty()) {

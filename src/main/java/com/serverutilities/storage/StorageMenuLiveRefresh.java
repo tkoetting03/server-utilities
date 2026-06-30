@@ -21,11 +21,17 @@ public final class StorageMenuLiveRefresh {
 			if (container == null) {
 				continue;
 			}
-			if (!container.viewContext().anchorPos().equals(pos) || !container.viewContext().isRoot()) {
+			if (!container.viewContext().anchorPos().equals(pos)) {
 				continue;
 			}
-			StorageMenuDefinition updated = StorageMenuChrome.applyRuntimeChrome(definition, player);
-			container.setDefinition(updated);
+			if (container.viewContext().isRoot()) {
+				StorageMenuDefinition updated = StorageMenuChrome.applyRuntimeChrome(definition, player);
+				container.setDefinition(updated);
+			} else {
+				StorageMenuDefinition subDef = StorageSubMenuManager.get(level, container.subMenuId()).orElse(container.definition());
+				StorageMenuDefinition updated = StorageMenuChrome.applyRuntimeChrome(subDef, player);
+				container.setDefinition(updated);
+			}
 			container.setShop(shop);
 			menu.slotsChanged(container);
 			menu.broadcastFullState();

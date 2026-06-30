@@ -5,7 +5,7 @@
   "key.serverutilities.toggle_storage_placement": "Toggle Storage Menu Placement Mode",
   "key.category.serverutilities.main": "Server Utilities Mod",
 
-  "screen.serverutilities.hotkey_hub.title": "Server Utilities Hub",
+  "screen.serverutilities.hotkey_hub.title": "Server Utilities Main Menu",
   "screen.serverutilities.hotkey_hub.hint": "Click a button to toggle a feature.",
   "screen.serverutilities.hotkey_hub.hologram_placement": "Hologram Placement",
   "screen.serverutilities.hotkey_hub.storage_placement": "Storage Menu Placement",

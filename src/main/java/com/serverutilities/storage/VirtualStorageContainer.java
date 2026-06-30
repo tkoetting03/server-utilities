@@ -90,7 +90,7 @@ public final class VirtualStorageContainer implements Container {
 		if (slot < 0 || slot >= getContainerSize()) {
 			return ItemStack.EMPTY;
 		}
-		if (viewContext.isRoot() && shop.enabled()) {
+		if (shop.enabled()) {
 			StorageMenuSlotConfig config = definition.slot(slot);
 			if (config.type() == StorageMenuSlotType.SHOP_ITEM) {
 				return shop.listing(slot)

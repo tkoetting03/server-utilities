@@ -44,6 +44,13 @@ public final class NpcMenuManager {
 		return NpcMenuStore.get(level, entityId).map(StorageMenuBlockData::shop);
 	}
 
+	public static void saveShop(ServerLevel level, UUID entityId, ShopDefinition shop) {
+		StorageMenuBlockData existing = NpcMenuStore.get(level, entityId).orElse(
+			new StorageMenuBlockData(StorageMenuDefinition.empty(StorageMenuSizes.SINGLE_CHEST), false, false, ShopDefinition.EMPTY)
+		);
+		NpcMenuStore.set(level, entityId, existing.withShop(shop));
+	}
+
 	public static void clear(ServerLevel level, UUID entityId) {
 		NpcMenuStore.clear(level, entityId);
 	}

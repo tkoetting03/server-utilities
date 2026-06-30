@@ -8,12 +8,13 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
-public record StorageMenuHologramSettings(float heightOffset, float scale) {
-	public static final StorageMenuHologramSettings DEFAULT = new StorageMenuHologramSettings(0.0F, HologramScale.DEFAULT);
+public record StorageMenuHologramSettings(float heightOffset, float scale, boolean seeThroughWalls) {
+	public static final StorageMenuHologramSettings DEFAULT = new StorageMenuHologramSettings(0.0F, HologramScale.DEFAULT, true);
 
 	public static final Codec<StorageMenuHologramSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 		Codec.FLOAT.lenientOptionalFieldOf("height_offset", DEFAULT.heightOffset()).forGetter(StorageMenuHologramSettings::heightOffset),
-		Codec.FLOAT.lenientOptionalFieldOf("scale", DEFAULT.scale()).forGetter(StorageMenuHologramSettings::scale)
+		Codec.FLOAT.lenientOptionalFieldOf("scale", DEFAULT.scale()).forGetter(StorageMenuHologramSettings::scale),
+		Codec.BOOL.lenientOptionalFieldOf("see_through_walls", DEFAULT.seeThroughWalls()).forGetter(StorageMenuHologramSettings::seeThroughWalls)
 	).apply(instance, StorageMenuHologramSettings::new));
 
 	public static final StreamCodec<RegistryFriendlyByteBuf, StorageMenuHologramSettings> STREAM_CODEC = StreamCodec.composite(
@@ -21,6 +22,8 @@ public record StorageMenuHologramSettings(float heightOffset, float scale) {
 		StorageMenuHologramSettings::heightOffset,
 		ByteBufCodecs.FLOAT,
 		StorageMenuHologramSettings::scale,
+		ByteBufCodecs.BOOL,
+		StorageMenuHologramSettings::seeThroughWalls,
 		StorageMenuHologramSettings::new
 	);
 
@@ -30,10 +33,14 @@ public record StorageMenuHologramSettings(float heightOffset, float scale) {
 	}
 
 	public StorageMenuHologramSettings withHeightOffset(float value) {
-		return new StorageMenuHologramSettings(value, scale);
+		return new StorageMenuHologramSettings(value, scale, seeThroughWalls);
 	}
 
 	public StorageMenuHologramSettings withScale(float value) {
-		return new StorageMenuHologramSettings(heightOffset, value);
+		return new StorageMenuHologramSettings(heightOffset, value, seeThroughWalls);
+	}
+
+	public StorageMenuHologramSettings withSeeThroughWalls(boolean value) {
+		return new StorageMenuHologramSettings(heightOffset, scale, value);
 	}
 }
